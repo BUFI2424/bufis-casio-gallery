@@ -1,0 +1,38 @@
+rules_version = '2';
+// Who may read and write what in Casio Gallery.
+// Replace OWNER_UID below with your own user id (the #login panel on the site shows it).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isOwner() { return signedIn() && request.auth.uid == 'OWNER_UID'; }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // the gallery itself: everyone looks, only the owner changes it
+    match /photos/{id}   { allow read: if true; allow write: if isOwner(); }
+    match /settings/{id} { allow read: if true; allow write: if isOwner(); }
+
+    // favourites: each visitor keeps their own; the owner can see everyone's
+    match /favs/{uid} {
+      allow read: if isMe(uid) || isOwner();
+      allow write: if isMe(uid);
+    }
+
+    // edited pictures: private to the visitor who made them
+    match /edits/{uid}/items/{id} {
+      allow read, delete: if isMe(uid);
+      allow create, update: if isMe(uid) && request.resource.data.img is string && request.resource.data.img.size() < 900000;
+    }
+
+    // share.exe: everyone sees; each visitor posts and removes their own; the owner can tidy up
+    match /shared/{uid} {
+      allow read: if true;
+      allow write: if isMe(uid) || isOwner();
+    }
+    match /shared/{uid}/items/{id} {
+      allow read: if true;
+      allow create: if (isMe(uid) || isOwner()) && request.resource.data.img is string && request.resource.data.img.size() < 900000;
+      allow update: if isMe(uid) || isOwner();
+      allow delete: if isMe(uid) || isOwner();
+    }
+  }
+}
