@@ -9,7 +9,6 @@ By Gerard Bufí.
 - `js/backend.js` – connects the page to Firebase: anonymous sign-in for visitors, Google sign-in for the owner, and the Firestore database.
 - `js/config.js` – the Firebase project settings and the owner's user id.
 - `firestore.rules` – who may read and write what. Paste it into Firebase console → Firestore → Rules.
-- `migration/` – one-off import of the photos and texts from the old Claude version. Can be deleted once imported.
 
 Everything (photos, texts, the manual, edited pictures, share.exe posts) lives in Firestore as data URLs, so the project runs on Firebase's free Spark plan without Cloud Storage.
 
