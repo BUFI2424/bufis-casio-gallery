@@ -10,7 +10,7 @@
   window.__backendReady = new Promise((r) => (window.__backendResolve = r));
   window.claude = { use: (name) => window.__backendReady.then((b) => b.use(name)) };
 </script>
-<script type="module" src="js/backend.js"></script>
+<script type="module" src="js/backend.js?v=2"></script>
 </head>
 <body>
 <style>
