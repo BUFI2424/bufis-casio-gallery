@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Casio Gallery</title>
+<title>bufi's casio gallery</title>
 <meta name="description" content="Photos taken with a Casio camera watch, by Gerard Bufí.">
 <script>
   // the page asks window.claude.use(...) for its database, files and user; js/backend.js answers on Firebase
@@ -940,6 +940,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const box = el("div", "edit");
     const nm = el("input"); nm.type = "text"; nm.id = "n-" + p.id; nm.maxLength = 60; nm.value = nameOf(p); nm.placeholder = "file name"; nm.setAttribute("aria-label", "Photo name");
     const inp = el("input"); inp.type = "text"; inp.id = "t-" + p.id; inp.maxLength = 80; inp.value = p.title || ""; inp.placeholder = "photo caption"; inp.setAttribute("aria-label", "Photo caption");
+    const dt = el("input"); dt.type = "date"; dt.id = "d-" + p.id; dt.setAttribute("aria-label", "Photo date");
+    { const ms = p.fileDate || p.createdAt; if (ms) { const d0 = new Date(ms), z2 = (n) => String(n).padStart(2, "0"); dt.value = d0.getFullYear() + "-" + z2(d0.getMonth() + 1) + "-" + z2(d0.getDate()); } }
     const row = el("div", "capline");
     const ok = btn("lnk", "save", async () => {
       // the name keeps whatever extension is typed; with none, the old one stays
@@ -955,8 +957,6 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     });
     for (const f of [nm, inp, dt]) f.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") box.remove(); });
     row.append(ok, del);
-    const dt = el("input"); dt.type = "date"; dt.id = "d-" + p.id; dt.setAttribute("aria-label", "Photo date");
-    { const ms = p.fileDate || p.createdAt; if (ms) { const d0 = new Date(ms), z2 = (n) => String(n).padStart(2, "0"); dt.value = d0.getFullYear() + "-" + z2(d0.getMonth() + 1) + "-" + z2(d0.getDate()); } }
     box.append(nm, inp, dt, row);
     w.body.append(box);
     w.geom.h = Math.max(w.geom.h, 182); w.apply();
@@ -3177,7 +3177,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   let whatTab = "site", whatSel = -1, whatPreview = false;
   let camPhoto = null, camManual = null, manWin = null;
   let aboutBlocks = null, camBlocks = null, whatWin = null, whatDraft = null;
-  const TABS = [["site", "this site"], ["cam", "the camera"]];
+  const TABS = [["site", "the site!"], ["cam", "the camera!"]];
   const IMG_SIZES = [120, 180, 240, 360], IMG_POS = ["left", "center", "right"];
   function openWhat() {
     if (whatWin) { focusWin(whatWin); return; }
