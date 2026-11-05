@@ -1330,9 +1330,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     return [c, r];
   }
   const ICON_KEY = "casio-gallery-icons";
+  // the owner's layout (set in edit mode) is the one everyone sees; a visitor's drags only last until they reload
+  let publicSpots = null;
   function loadIconSpots() {
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem(ICON_KEY) || "{}"); } catch (_) {}
+    let saved = publicSpots || {};
+    if (!publicSpots && canWrite && !galleryMode) { try { saved = JSON.parse(localStorage.getItem(ICON_KEY) || "{}"); } catch (_) {} }
     // icons fill the first column top to bottom, then the next one, so none fall below the bar on short screens
     const rows = Math.max(1, Math.floor((desk.clientHeight - ORIGIN) / CELL_H)), cols = Math.max(1, Math.floor((desk.clientWidth - ORIGIN) / CELL_W));
     iconEls().forEach((icon, i) => {
@@ -1344,7 +1346,9 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   }
   function saveIconSpots() {
     const out = {}; iconEls().forEach((icon) => { out[icon.id] = [+icon.dataset.c, +icon.dataset.r]; });
-    try { localStorage.setItem(ICON_KEY, JSON.stringify(out)); } catch (_) {}
+    if (!canWrite || galleryMode || !db) return;
+    publicSpots = out;
+    db.doc("settings/icons").set({ spots: out, updatedAt: Date.now() }).catch(() => setStatus("Couldn't save the icon positions.", true));
   }
   function makeIconDraggable(icon) {
     let sx, sy, ox, oy, on = false, moved = false;
@@ -3607,6 +3611,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     pushNick();
     db.doc("settings/cam").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; camPhoto = d.photo || null; camManual = d.manual || null; if (!whatDraft) renderWhat(); }, () => {});
     db.doc("settings/about").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; aboutBlocks = d.blocks || null; camBlocks = d.cam || null; if (!whatDraft) renderWhat(); }, () => {});
+    db.doc("settings/icons").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; const next = d.spots || null; if (!next && canWrite && !galleryMode) { saveIconSpots(); return; } if (JSON.stringify(next) === JSON.stringify(publicSpots)) return; publicSpots = next; loadIconSpots(); }, () => {});
     db.collection("settings").doc("desk").onSnapshot((s) => { const v = s.exists ? s.data() : null; setWallpaper(v && (v.bgUrl || (v.bgAssetId && "/_blob/" + v.bgAssetId))); }, () => {});
     let firstSnap = true;
     db.collection("photos").orderBy("createdAt", "asc").onSnapshot((snap) => {
