@@ -8,4 +8,4 @@ export const firebaseConfig = {
   appId: "1:347787489541:web:b2894704cbf13f9f68076c"
 };
 // The Firebase user id of the gallery owner (the #login panel shows it after signing in with Google).
-export const OWNER_UID = "REPLACE_ME";
+export const OWNER_UID = "OifkAYnLmnQT2zGEkwlYwnFg4b53";

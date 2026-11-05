@@ -1,10 +1,10 @@
 rules_version = '2';
 // Who may read and write what in Casio Gallery.
-// Replace OWNER_UID below with your own user id (the #login panel on the site shows it).
+// The owner's user id is written in isOwner() below.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isOwner() { return signedIn() && request.auth.uid == 'OWNER_UID'; }
+    function isOwner() { return signedIn() && request.auth.uid == 'OifkAYnLmnQT2zGEkwlYwnFg4b53'; }
     function isMe(uid) { return signedIn() && request.auth.uid == uid; }
 
     // the gallery itself: everyone looks, only the owner changes it
