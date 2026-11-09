@@ -34,5 +34,17 @@ service cloud.firestore {
       allow update: if isMe(uid) || isOwner();
       allow delete: if isMe(uid) || isOwner();
     }
+
+    // tag.exe: a board everyone reads; each visitor posts and removes their own notes; the owner can tidy up
+    match /tags/{id} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['x', 'y', 'text', 'nick', 'uid', 'color', 'createdAt'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 300
+        && request.resource.data.nick is string && request.resource.data.nick.size() <= 20
+        && request.resource.data.x is number && request.resource.data.y is number;
+      allow update: if false;
+      allow delete: if isMe(resource.data.uid) || isOwner();
+    }
   }
 }

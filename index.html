@@ -205,6 +205,25 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .tx .toolbar button { flex-basis: 30%; }
 .tx .toolbar .tx-desk, .tx .toolbar .tx-share { flex-basis: 45%; }
 .tx .val { width: 46px; white-space: nowrap; }
+/* tag.exe */
+.tg { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #c0c0c0; color: #000; font: 12px Tahoma, Geneva, Arial, sans-serif; }
+.tg-bar { display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-bottom: 1px solid #808080; flex-wrap: wrap; }
+.tg-bar button { font: 12px Tahoma, Geneva, Arial, sans-serif; color: #000; background: #c0c0c0; border: 2px solid; border-color: #fff #000 #000 #fff; padding: 1px 7px; cursor: pointer; }
+.tg-bar button:active, .tg-bar button.on { border-color: #000 #fff #fff #000; }
+.tg-z { min-width: 40px; text-align: center; background: #fff; border: 1px solid; border-color: #808080 #fff #fff #808080; padding: 1px 3px; font-size: 11px; }
+.tg-cols { display: flex; gap: 3px; margin-left: 6px; }
+.tg-bar .tg-sw { width: 18px; height: 18px; padding: 0; }
+.tg-hint { margin-left: auto; font-size: 10px; color: #404040; }
+.tg-view { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #202020; border: 2px solid; border-color: #000 #fff #fff #000; touch-action: none; cursor: crosshair; }
+.tg-view.panning { cursor: grabbing; }
+.tg-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: #404040 radial-gradient(#525252 1px, transparent 1px) 0 0 / 40px 40px; }
+.tg-note { position: absolute; max-width: 280px; font: 14px/1.3 Verdana, Geneva, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; cursor: default; -webkit-user-select: text; user-select: text; }
+.tg-note .tg-by { display: block; font-size: 10px; color: #c0c0c0; margin-top: 1px; }
+.tg-del { position: absolute; top: -8px; right: -16px; display: none; font: 9px/1 Arial, sans-serif; color: #000; background: #c0c0c0; border: 1px solid #000; padding: 1px 3px; cursor: pointer; }
+.tg-note:hover .tg-del { display: block; }
+@media (hover: none) { .tg-del { display: block; } }
+.tg-edit { position: absolute; width: 220px; height: 60px; font: 14px/1.3 Verdana, Geneva, sans-serif; background: rgba(0, 0, 0, 0.25); border: 1px dashed #c0c0c0; resize: none; outline: none; padding: 2px; -webkit-user-select: text; user-select: text; }
+.tg-edit::placeholder { color: #808080; }
 .what img { display: block; max-width: 100%; margin: 6px auto; image-rendering: pixelated; border: 1px solid #000; }
 .what .wblock { border-bottom: 1px dotted var(--lo); padding: 4px 0; }
 .what .wtext { width: 100%; box-sizing: border-box; font: 12px var(--serif); border: 2px solid; border-color: #808080 #fff #fff #808080; padding: 3px; resize: vertical; -webkit-user-select: text; user-select: text; }
@@ -411,7 +430,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pixfont" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 1"/></feComponentTransfer></filter><filter id="pixfont-soft" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 0.45 0.8 1"/></feComponentTransfer></filter></svg>
 <div id="screen"><div id="raster">
 <canvas id="wall" aria-hidden="true"></canvas>
-<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button><button class="dicon" id="asciiIcon" type="button" hidden style="left:12px;top:732px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">img-txt.exe</span></button></div>
+<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button><button class="dicon" id="asciiIcon" type="button" hidden style="left:12px;top:732px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">img-txt.exe</span></button><button class="dicon" id="tagIcon" type="button" hidden style="left:12px;top:804px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">tag.exe</span></button></div>
 <footer id="bar" class="bevel">
   <div class="grp" id="grp" hidden><button class="b bevel" id="grpBtn" type="button" aria-haspopup="true"><canvas width="16" height="16"></canvas><span id="grpLbl">photos</span></button><div class="grp-list bevel" id="grpList"><div class="head">Open photos</div></div></div>
   <div class="tasks" id="tasks"></div>
@@ -542,7 +561,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   function btn(cls, text, fn) { const b = el("button", cls, text); b.type = "button"; b.addEventListener("click", fn); return b; }
 
   /* ---------- window manager ---------- */
-  const every = () => [...wins.values(), readme, index, loader, legend, binWin, favWin, peopleWin, capWin, glitchWin, hexWin, bitsWin, pixWin, shareWin, whatWin, asciiWin].filter(Boolean);
+  const every = () => [...wins.values(), readme, index, loader, legend, binWin, favWin, peopleWin, capWin, glitchWin, hexWin, bitsWin, pixWin, shareWin, whatWin, asciiWin, tagWin].filter(Boolean);
   function focusWin(w) {
     w.el.classList.remove("hidden");
     w.el.style.zIndex = ++z;
@@ -1172,6 +1191,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       ["capture", "picture of the desktop"],
       ["glitch", "corrupt, dither, shuffle a photo"],
       ["img-txt", "a photo redrawn in characters"],
+      ["tag", "a board for everyone's notes"],
       ["share", "pictures everyone posted"],
       ["what?", "what this site is"]
     ]);
@@ -3204,6 +3224,139 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       [90, () => "Reading " + photos.length + " photos..."], [100, "Ready."]], openAscii);
   });
 
+  /* ---------- tag.exe: a shared board where anyone writes a note anywhere ---------- */
+  let tagWin = null, tagUnsub = null;
+  const TAG_W = 2000, TAG_H = 1300, TAG_COLORS = ["#ffffff", "#ffe24a", "#ff9fbf", "#9fd0ff"];
+  let tagLast = 0;
+  function openTag() {
+    if (tagWin) { focusWin(tagWin); return; }
+    const W = desk.clientWidth, H = desk.clientHeight;
+    const ww = Math.min(640, W - 16), hh = Math.min(460, H - 16);
+    tagWin = makeWin("tag.exe", { x: Math.max(8, Math.round((W - ww) / 2)), y: Math.max(8, Math.round((H - hh) / 2)), w: ww, h: hh }, { closable: true, onClose: () => { tagWin = null; if (tagUnsub) { try { tagUnsub(); } catch (_) {} tagUnsub = null; } } });
+    const root = el("div", "tg"); tagWin.body.append(root);
+    try { initTag(root); } catch (_) { root.textContent = "tag.exe couldn't start."; }
+  }
+  function initTag(root) {
+    root.innerHTML = '<div class="tg-bar"><button type="button" class="tg-out" title="Zoom out" aria-label="Zoom out">−</button><span class="tg-z">100%</span>' +
+      '<button type="button" class="tg-in" title="Zoom in" aria-label="Zoom in">+</button><button type="button" class="tg-fit" title="See the whole board">all</button>' +
+      '<span class="tg-cols"></span><span class="tg-hint">click anywhere on the board to write</span></div>' +
+      '<div class="tg-view"><div class="tg-world"></div></div>';
+    const view = root.querySelector(".tg-view"), world = root.querySelector(".tg-world"), zl = root.querySelector(".tg-z"), hint = root.querySelector(".tg-hint");
+    world.style.width = TAG_W + "px"; world.style.height = TAG_H + "px";
+    let s = 1, tx = 0, ty = 0, color = TAG_COLORS[0], editing = null, centred = false;
+    const say = (t) => { hint.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => { hint.textContent = "click anywhere on the board to write"; }, 3500); };
+    // colours for the next note
+    const cols = root.querySelector(".tg-cols");
+    TAG_COLORS.forEach((c, i) => {
+      const b = el("button", "tg-sw" + (i === 0 ? " on" : "")); b.type = "button"; b.style.background = c; b.title = "Write in this colour"; b.setAttribute("aria-label", "colour " + (i + 1));
+      b.addEventListener("click", () => { color = c; cols.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); if (editing) editing.style.color = c; });
+      cols.append(b);
+    });
+    // zoom and pan
+    const minS = () => Math.min(1, view.clientWidth / TAG_W, view.clientHeight / TAG_H);
+    const clampPan = () => {
+      const vw = view.clientWidth, vh = view.clientHeight, w = TAG_W * s, h = TAG_H * s;
+      tx = w <= vw ? (vw - w) / 2 : Math.min(0, Math.max(vw - w, tx));
+      ty = h <= vh ? (vh - h) / 2 : Math.min(0, Math.max(vh - h, ty));
+    };
+    const apply = () => { clampPan(); world.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + s + ")"; zl.textContent = Math.round(s * 100) + "%"; };
+    const zoomAt = (ns, cx, cy) => { ns = Math.min(3, Math.max(minS(), ns)); const wx = (cx - tx) / s, wy = (cy - ty) / s; s = ns; tx = cx - wx * s; ty = cy - wy * s; apply(); };
+    const centreOn = (wx, wy) => { tx = view.clientWidth / 2 - wx * s; ty = view.clientHeight / 2 - wy * s; apply(); };
+    const mid = () => [view.clientWidth / 2, view.clientHeight / 2];
+    root.querySelector(".tg-in").addEventListener("click", () => zoomAt(s * 1.25, ...mid()));
+    root.querySelector(".tg-out").addEventListener("click", () => zoomAt(s / 1.25, ...mid()));
+    root.querySelector(".tg-fit").addEventListener("click", () => { s = minS(); apply(); });
+    const local = (e) => { const r = view.getBoundingClientRect(); return [(e.clientX - r.left) / S, (e.clientY - r.top) / S]; };
+    view.addEventListener("wheel", (e) => { e.preventDefault(); const [x, y] = local(e); zoomAt(s * Math.exp(-e.deltaY * 0.0015), x, y); }, { passive: false });
+    const pts = new Map(); let start = null, moved = false, pinch = null;
+    view.addEventListener("pointerdown", (e) => {
+      if (e.target.closest(".tg-edit, .tg-del")) return;
+      view.setPointerCapture(e.pointerId); pts.set(e.pointerId, local(e));
+      if (pts.size === 1) { start = { p: local(e), tx, ty, target: e.target }; moved = false; }
+      if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), s, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }; moved = true; }
+    });
+    view.addEventListener("pointermove", (e) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, local(e));
+      if (pts.size >= 2 && pinch) { const [a, b] = [...pts.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); zoomAt(pinch.s * d / pinch.d, pinch.m[0], pinch.m[1]); return; }
+      if (!start) return;
+      const [x, y] = local(e), dx = x - start.p[0], dy = y - start.p[1];
+      if (!moved && Math.hypot(dx, dy) < 5) return;
+      moved = true; view.classList.add("panning"); tx = start.tx + dx; ty = start.ty + dy; apply();
+    });
+    const up = (e) => {
+      if (!pts.has(e.pointerId)) return;
+      pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
+      if (pts.size) return;
+      view.classList.remove("panning");
+      const st = start; start = null;
+      if (!st || moved || e.type === "pointercancel") return;
+      if (st.target.closest(".tg-note")) return;
+      if (editing) { finish(true); return; }
+      const [x, y] = local(e); write((x - tx) / s, (y - ty) / s);
+    };
+    view.addEventListener("pointerup", up); view.addEventListener("pointercancel", up);
+
+    // writing a note
+    function write(wx, wy) {
+      if (!db || !meId) { say("Writing isn't available right now."); return; }
+      const t = el("textarea", "tg-edit"); t.maxLength = 300; t.spellcheck = false; t.style.color = color;
+      t.style.left = Math.min(TAG_W - 230, Math.max(0, wx)) + "px"; t.style.top = Math.min(TAG_H - 70, Math.max(0, wy - 10)) + "px";
+      t.placeholder = "write here, Enter to post";
+      t.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); finish(true); } else if (e.key === "Escape") finish(false); });
+      t.addEventListener("blur", () => setTimeout(() => { if (editing === t) finish(true); }, 120));
+      world.append(t); editing = t; t.focus(); setTimeout(() => { if (editing === t && document.activeElement !== t) t.focus(); }, 20);
+    }
+    async function finish(keep) {
+      const t = editing; if (!t) return; editing = null;
+      const text = t.value.replace(/\s+$/, "").slice(0, 300); t.remove();
+      if (!keep || !text.trim()) return;
+      if (Date.now() - tagLast < 4000) { say("Wait a moment before writing again."); return; }
+      tagLast = Date.now();
+      try { await db.collection("tags").doc(uid()).set({ x: Math.round(parseFloat(t.style.left)), y: Math.round(parseFloat(t.style.top)), text, nick: myNick || "anon", uid: meId, color: t.style.color && TAG_COLORS.includes(color) ? color : TAG_COLORS[0], createdAt: Date.now() }); }
+      catch (_) { say("Couldn't post the note."); }
+    }
+
+    // the notes, live
+    function render(list) {
+      [...world.querySelectorAll(".tg-note")].forEach((n) => n.remove());
+      list.forEach((n) => {
+        const d = el("div", "tg-note"); d.style.left = (n.x || 0) + "px"; d.style.top = (n.y || 0) + "px"; d.style.color = TAG_COLORS.includes(n.color) ? n.color : TAG_COLORS[0];
+        d.append(document.createTextNode(n.text || ""), el("span", "tg-by", "— " + (n.nick || "anon")));
+        if (n.uid === meId || isOwnerView) {
+          const x = el("button", "tg-del", "x"); x.type = "button"; x.title = "Remove this note";
+          x.addEventListener("click", async (e) => { e.stopPropagation(); try { await db.doc("tags/" + n.id).delete(); } catch (_) { say("Couldn't remove it."); } });
+          d.append(x);
+        }
+        world.append(d);
+      });
+      if (!centred) {
+        centred = true;
+        const last = list[list.length - 1];
+        if (last) centreOn((last.x || 0) + 100, (last.y || 0) + 20); else centreOn(TAG_W / 2, TAG_H / 2);
+      }
+    }
+    s = Math.max(minS(), 0.8); centreOn(TAG_W / 2, TAG_H / 2);
+    new ResizeObserver(() => apply()).observe(view);
+    if (!db) { say("The board isn't available right now."); return; }
+    tagUnsub = db.collection("tags").orderBy("createdAt", "asc").onSnapshot((sn) => render(sn.docs.map((d) => ({ id: d.id, ...d.data() }))), () => say("Couldn't load the board."));
+  }
+  function drawTagIcon(c) {
+    // a little slate on legs, with chalk notes in white, yellow and pink
+    const g = c.getContext("2d"), R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+    g.clearRect(0, 0, 16, 16);
+    R(0, 1, 16, 12, "#808080"); R(0, 1, 16, 1, "#c0c0c0"); R(0, 1, 1, 12, "#c0c0c0"); R(1, 2, 14, 10, "#404040");
+    R(3, 4, 5, 1, "#fff"); R(3, 6, 7, 1, "#fff"); R(10, 4, 3, 1, "#ffe24a"); R(4, 9, 4, 1, "#ff9fbf"); R(9, 8, 1, 1, "#fff"); R(10, 9, 2, 1, "#fff");
+    R(2, 13, 12, 1, "#c0c0c0"); R(3, 14, 1, 2, "#404040"); R(12, 14, 1, 2, "#404040"); R(10, 12, 3, 1, "#fff");
+  }
+  const tgIcon = $("tagIcon");
+  drawTagIcon(tgIcon.querySelector(".ico"));
+  wireIcon(tgIcon, () => {
+    if (tagWin) { focusWin(tagWin); return; }
+    runLoader("tag", "tag.exe", drawTagIcon, [
+      [30, "Starting tag.exe..."], [70, "Wiping the board..."], [100, "Ready."]], openTag);
+  });
+
   /* ---------- edited pictures (your own desktop) and share.exe (everyone's) ---------- */
   let myEdits = [], editsLocal = false, sharedItems = [], shareWin = null, isOwnerView = false;
   const EDITS_KEY = "casio-gallery-edits";
@@ -3779,7 +3932,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     $("editBtn").hidden = !canWrite;
     $("guestBtn").hidden = !canWrite || galleryMode;
     // every program stays on the desktop in both modes
-    [sIcon, gIcon, aIcon, lIcon, tIcon, fIcon, cIcon, gxIcon, shIcon, whIcon, txIcon].forEach((ic) => { ic.hidden = false; });
+    [sIcon, gIcon, aIcon, lIcon, tIcon, fIcon, cIcon, gxIcon, shIcon, whIcon, txIcon, tgIcon].forEach((ic) => { ic.hidden = false; });
     loadIconSpots();
     updateSelTools();
     if (whatWin) { whatDraft = null; renderWhat(); }
