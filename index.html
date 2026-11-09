@@ -3837,13 +3837,16 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
 
   /* ---------- boot ---------- */
   // the desktop stays behind the welcome animation until photos, wallpaper and icons are all in place
-  const boot = { photos: false, desk: false, icons: false };
+  const boot = { photos: false, desk: false, icons: false, favs: false, edits: false, about: false, cam: false };
   let bootDone = false;
   function bootStep(k) { boot[k] = true; if (!bootDone && Object.values(boot).every(Boolean)) finishBoot(); }
   async function finishBoot() {
     if (bootDone) return; bootDone = true;
     const imgs = [...desk.querySelectorAll("img")].filter((i) => i.loading !== "lazy" && i.offsetParent);
     await Promise.all(imgs.map((i) => i.complete ? null : new Promise((r) => { i.addEventListener("load", r, { once: true }); i.addEventListener("error", r, { once: true }); setTimeout(r, 8000); })));
+    try { if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 3000))]); } catch (_) {}
+    // windows settle their size once their picture is in; give that a moment before showing anything
+    await new Promise((r) => setTimeout(r, 150));
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     bootShown = true;
     document.documentElement.classList.remove("booting");
@@ -3868,16 +3871,17 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
           if (d.nick) { remoteNick = d.nick; const inp = $("nickIn"); if (!myNick && !$("nickGate").hidden && !inp.value) inp.value = d.nick; }
         }
         else loadLocalFavs();
-      }, () => { favLocal = true; loadLocalFavs(); });
-    } else { favLocal = true; loadLocalFavs(); }
+        bootStep("favs");
+      }, () => { favLocal = true; loadLocalFavs(); bootStep("favs"); });
+    } else { favLocal = true; loadLocalFavs(); bootStep("favs"); }
     try { isOwnerView = userCap ? await userCap.isOwner() : false; } catch (_) { isOwnerView = false; }
     decideGate(isOwnerView || canWrite);
-    if (meId) editsCol().onSnapshot((sn) => { myEdits = sn.docs.map((d) => ({ id: d.id, ...d.data() })); syncEditWins(); }, () => { editsLocal = true; loadLocalEdits(); });
-    else { editsLocal = true; loadLocalEdits(); }
+    if (meId) editsCol().onSnapshot((sn) => { myEdits = sn.docs.map((d) => ({ id: d.id, ...d.data() })); syncEditWins(); bootStep("edits"); }, () => { editsLocal = true; loadLocalEdits(); bootStep("edits"); });
+    else { editsLocal = true; loadLocalEdits(); bootStep("edits"); }
     watchShared();
     pushNick();
-    db.doc("settings/cam").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; camPhoto = d.photo || null; camManual = d.manual || null; if (!whatDraft) renderWhat(); }, () => {});
-    db.doc("settings/about").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; aboutBlocks = d.blocks || null; camBlocks = d.cam || null; if (!whatDraft) renderWhat(); }, () => {});
+    db.doc("settings/cam").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; camPhoto = d.photo || null; camManual = d.manual || null; if (!whatDraft) renderWhat(); bootStep("cam"); }, () => bootStep("cam"));
+    db.doc("settings/about").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; aboutBlocks = d.blocks || null; camBlocks = d.cam || null; if (!whatDraft) renderWhat(); bootStep("about"); }, () => bootStep("about"));
     db.doc("settings/icons").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; const next = d.spots || null; if (!next && canWrite && !galleryMode) { saveIconSpots(); bootStep("icons"); return; } if (JSON.stringify(next) === JSON.stringify(publicSpots)) { bootStep("icons"); return; } publicSpots = next; loadIconSpots(); bootStep("icons"); }, () => bootStep("icons"));
     db.collection("settings").doc("desk").onSnapshot((s) => { const v = s.exists ? s.data() : null; setWallpaper(v && (v.bgUrl || (v.bgAssetId && "/_blob/" + v.bgAssetId))).then(() => bootStep("desk")); }, () => bootStep("desk"));
     let firstSnap = true;
