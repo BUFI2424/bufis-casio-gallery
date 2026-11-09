@@ -492,13 +492,17 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     S = innerWidth / LW;
     // the height you can actually see: on iPhones the browser's own bars can cover part of innerHeight
     const vv = window.visualViewport;
-    let visH = Math.min(innerHeight, document.documentElement.clientHeight || innerHeight, vv ? vv.height : innerHeight);
+    // phones: only what's actually visible (their bars can cover part of innerHeight).
+    // iPad and computers: the whole window. iPadOS can report a shorter visible area (keyboard shortcut bar, Stage Manager)
+    // even when nothing covers the page, which left a strip of bare background under the taskbar.
+    let visH = PHONE ? Math.min(innerHeight, document.documentElement.clientHeight || innerHeight, vv ? vv.height : innerHeight)
+                     : Math.max(innerHeight, document.documentElement.clientHeight || 0, vv && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) ? vv.height : 0);
     // an on-screen keyboard (iPad, phones) shrinks the visible area while typing; keep the desktop its full height meanwhile
     const ae = document.activeElement, typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
     if (typing && fitScreen.h && visH < fitScreen.h && fitScreen.w === innerWidth) visH = fitScreen.h;
     else { fitScreen.h = visH; fitScreen.w = innerWidth; }
     const sc = $("screen"), rs = $("raster"), LH = Math.floor(visH / S);
-    sc.style.top = (vv && !typing ? vv.offsetTop : 0) + "px";
+    sc.style.top = (PHONE && vv && !typing ? vv.offsetTop : 0) + "px";
     rs.style.width = LW + "px"; rs.style.height = LH + "px";
     sc.style.width = LW + "px"; sc.style.height = LH + "px";
     sc.style.transform = "scale(" + S + ")";
