@@ -3416,12 +3416,15 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     return { close() { clearInterval(blinkT); clearTimeout(flushT); if (pending.size) flush(); } };
   }
   function drawTagIcon(c) {
-    // a little slate on legs, with chalk notes in white, yellow and pink
+    // a blue brick wall with ;P! sprayed on in white and a yellow line under it
     const g = c.getContext("2d"), R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
     g.clearRect(0, 0, 16, 16);
-    R(0, 1, 16, 12, "#808080"); R(0, 1, 16, 1, "#c0c0c0"); R(0, 1, 1, 12, "#c0c0c0"); R(1, 2, 14, 10, "#404040");
-    R(3, 4, 5, 1, "#fff"); R(3, 6, 7, 1, "#fff"); R(10, 4, 3, 1, "#ffe24a"); R(4, 9, 4, 1, "#ff9fbf"); R(9, 8, 1, 1, "#fff"); R(10, 9, 2, 1, "#fff");
-    R(2, 13, 12, 1, "#c0c0c0"); R(3, 14, 1, 2, "#404040"); R(12, 14, 1, 2, "#404040"); R(10, 12, 3, 1, "#fff");
+    for (let y = 0; y < 16; y += 4) {
+      for (let x = 0; x < 16; x++) R(x, y, 1, 4, (x + (y / 4 % 2) * 3) % 6 ? "#000080" : "#00006a");
+      R(0, Math.min(y + 3, 15), 16, 1, "#000050");
+    }
+    [".w.ww..w", "...w.w.w", ".w.ww..w", ".w.w....", "w..w...w"].forEach((row, y) => [...row].forEach((ch, x) => { if (ch === "w") R(4 + x, 4 + y, 1, 1, "#fff"); }));
+    R(2, 11, 12, 1, "#ffe24a");
   }
   const tgIcon = $("tagIcon");
   drawTagIcon(tgIcon.querySelector(".ico"));
