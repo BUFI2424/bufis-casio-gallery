@@ -214,6 +214,8 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .tg-hint { margin-left: auto; font-size: 10px; color: #404040; }
 .tg-view { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #000080; border: 2px solid; border-color: #000 #fff #fff #000; touch-action: none; cursor: text; }
 .tg-view.panning { cursor: grabbing; }
+.tg-view.selmode { cursor: cell; }
+.tg-bar button.on { border-color: #000 #fff #fff #000; background: #d4d0c8; }
 .tg-cv { position: absolute; left: 0; top: 0; display: block; }
 .tg-in-txt { position: absolute; width: 20px; height: 20px; padding: 0; border: 0; opacity: 0; resize: none; font-size: 16px; color: transparent; background: transparent; caret-color: transparent; -webkit-user-select: text; user-select: text; }
 .what img { display: block; max-width: 100%; margin: 6px auto; image-rendering: pixelated; border: 1px solid #000; }
@@ -3023,7 +3025,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const q = (s) => root.querySelector(s);
     root.innerHTML =
       '<div class="toolbar"><select class="tx-src" title="What to draw"></select>' +
-      '<button type="button" class="tx-copy" title="Copy the text">Copy</button><button type="button" class="tx-txt" title="Save as a text file">.txt</button>' +
+      '<button type="button" class="tx-copy" title="Copy all the text">Copy all</button><button type="button" class="tx-txt" title="Save as a text file">.txt</button>' +
       '<button type="button" class="tx-png" title="Save as a picture">PNG</button><button type="button" class="tx-desk" title="Put this picture on your desktop">+ Desktop</button>' +
       '<button type="button" class="tx-share" title="Post this picture in share.exe">+ Share</button></div>' +
       '<div class="viewer"><div class="tx-paper"><pre class="tx-out"></pre></div><div class="caption tx-cap">&nbsp;</div></div>' +
@@ -3232,6 +3234,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   function initTag(root) {
     root.innerHTML = '<div class="tg-bar"><button type="button" class="tg-out" title="Zoom out" aria-label="Zoom out">−</button><span class="tg-z">100%</span>' +
       '<button type="button" class="tg-in" title="Zoom in" aria-label="Zoom in">+</button><button type="button" class="tg-home" title="Back to the start of the wall">home</button>' +
+      '<button type="button" class="tg-selb" title="Drag over the wall to select text (or hold Shift and drag)" aria-pressed="false">select</button><button type="button" class="tg-copy" title="Copy the selected text">copy</button>' +
       '<span class="tg-hint">click anywhere and type or paste</span></div>' +
       '<div class="tg-view"><canvas class="tg-cv"></canvas><textarea class="tg-in-txt" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Type on the wall"></textarea></div>';
     const view = root.querySelector(".tg-view"), cv = root.querySelector(".tg-cv"), inp = root.querySelector(".tg-in-txt");
@@ -3239,7 +3242,23 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const cells = new Map();          // "x,y" -> character, from the wall
     const mine = new Map();           // what this visitor typed and hasn't been confirmed yet
     let s = 1, ox = -2, oy = -2;      // zoom and the top-left corner of the view, in cells
-    let cur = null, lineStart = 0, focused = false, blink = true;
+    let cur = null, lineStart = 0, focused = false, blink = true, sel = null, selMode = false, selecting = false;
+    const selBtn = root.querySelector(".tg-selb"), copyBtn = root.querySelector(".tg-copy");
+    const selRect = () => sel && { x0: Math.min(sel.ax, sel.bx), x1: Math.max(sel.ax, sel.bx), y0: Math.min(sel.ay, sel.by), y1: Math.max(sel.ay, sel.by) };
+    function selText() {
+      const r = selRect(); if (!r) return "";
+      const rows = [];
+      for (let y = r.y0; y <= r.y1; y++) { let line = ""; for (let x = r.x0; x <= r.x1; x++) { const c = charAt(x, y); line += c && c !== "" ? c : " "; } rows.push(line.replace(/\s+$/, "")); }
+      while (rows.length && !rows[rows.length - 1]) rows.pop();
+      return rows.join("\n");
+    }
+    async function copySel() {
+      const t = selText(); if (!t.trim()) { say("Select some text first."); return; }
+      try { await navigator.clipboard.writeText(t); say("Copied."); }
+      catch (_) { const a = el("textarea"); a.value = t; root.append(a); a.select(); try { document.execCommand("copy"); say("Copied."); } catch (__) { say("Couldn't copy."); } a.remove(); inp.focus({ preventScroll: true }); }
+    }
+    selBtn.addEventListener("click", () => { selMode = !selMode; selBtn.classList.toggle("on", selMode); selBtn.setAttribute("aria-pressed", selMode ? "true" : "false"); view.classList.toggle("selmode", selMode); if (!selMode) { sel = null; draw(); } });
+    copyBtn.addEventListener("click", copySel);
     const say = (t) => { hint.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => { hint.textContent = "click anywhere and type or paste"; }, 3500); };
     const key = (x, y) => x + "," + y;
     const charAt = (x, y) => { const k = key(x, y); return mine.has(k) ? mine.get(k) : (cells.get(k) || ""); };
@@ -3255,6 +3274,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       g.fillStyle = "#000080"; g.fillRect(0, 0, w, h);
       const cw = TG_CW * s, ch = TG_CH * s;
       const x0 = Math.floor(ox), y0 = Math.floor(oy), x1 = Math.ceil(ox + w / cw), y1 = Math.ceil(oy + h / ch);
+      const sr = selRect();
+      if (sr) { g.fillStyle = "rgba(255,255,225,0.35)"; g.fillRect((sr.x0 - ox) * cw, (sr.y0 - oy) * ch, (sr.x1 - sr.x0 + 1) * cw, (sr.y1 - sr.y0 + 1) * ch); }
       if (cur && focused && blink && cur.x >= x0 && cur.x <= x1 && cur.y >= y0 && cur.y <= y1) { g.fillStyle = "#ffffe1"; g.fillRect((cur.x - ox) * cw, (cur.y - oy) * ch, cw, ch); }
       else if (cur) { g.strokeStyle = "#ffffe1"; g.lineWidth = 1; g.strokeRect((cur.x - ox) * cw + 0.5, (cur.y - oy) * ch + 0.5, cw - 1, ch - 1); }
       g.font = Math.max(2, Math.round(ch * 0.82)) + 'px "Times New Roman", Times, serif'; g.textBaseline = "middle"; g.textAlign = "center";
@@ -3284,7 +3305,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const pts = new Map(); let start = null, moved = false, pinch = null;
     view.addEventListener("pointerdown", (e) => {
       view.setPointerCapture(e.pointerId); pts.set(e.pointerId, local(e));
-      if (pts.size === 1) { start = { p: local(e), ox, oy }; moved = false; }
+      if (pts.size === 1) {
+        start = { p: local(e), ox, oy }; moved = false;
+        selecting = (selMode || e.shiftKey) && e.pointerType !== "touch" || selMode;
+        if (selecting) { const [x, y] = local(e); const c = { x: Math.floor(ox + x / (TG_CW * s)), y: Math.floor(oy + y / (TG_CH * s)) }; sel = { ax: c.x, ay: c.y, bx: c.x, by: c.y }; draw(); }
+      }
       if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, s, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }; moved = true; }
     });
     view.addEventListener("pointermove", (e) => {
@@ -3294,7 +3319,9 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       if (!start) return;
       const [x, y] = local(e), dx = x - start.p[0], dy = y - start.p[1];
       if (!moved && Math.hypot(dx, dy) < 5) return;
-      moved = true; view.classList.add("panning");
+      moved = true;
+      if (selecting) { sel.bx = Math.floor(ox + x / (TG_CW * s)); sel.by = Math.floor(oy + y / (TG_CH * s)); draw(); return; }
+      view.classList.add("panning");
       ox = start.ox - dx / (TG_CW * s); oy = start.oy - dy / (TG_CH * s); draw();
     });
     const up = (e) => {
@@ -3303,7 +3330,9 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       if (pts.size) return;
       view.classList.remove("panning");
       const st = start; start = null;
+      if (selecting) { selecting = false; if (!moved) { sel = null; draw(); } inp.focus({ preventScroll: true }); return; }
       if (!st || moved || e.type === "pointercancel") return;
+      if (sel) { sel = null; }
       const [x, y] = local(e);
       cur = { x: Math.floor(ox + x / (TG_CW * s)), y: Math.floor(oy + y / (TG_CH * s)) }; lineStart = cur.x;
       place(); inp.focus({ preventScroll: true }); blink = true; draw();
@@ -3339,6 +3368,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     }
     function type(text) {
       if (!cur) return;
+      if (sel) sel = null;
       // pasted text keeps its lines and spacing; very long pastes are cut so the wall stays readable
       text = text.replace(/\r\n?/g, "\n").replace(/\t/g, "    ");
       if (text.length > 6000) { text = text.slice(0, 6000); say("Only the first 6000 characters were pasted."); }
@@ -3358,6 +3388,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     }
     inp.addEventListener("keydown", (e) => {
       e.stopPropagation();
+      if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "C") && sel) { e.preventDefault(); copySel(); return; }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "a" || e.key === "A")) { e.preventDefault(); return; }
       if (!cur || e.isComposing) return;
       const mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       if (mv) { e.preventDefault(); cur = { x: cur.x + mv[0], y: cur.y + mv[1] }; if (mv[1]) lineStart = cur.x; keepInView(); place(); blink = true; draw(); return; }
