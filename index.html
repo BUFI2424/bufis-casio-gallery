@@ -9,13 +9,12 @@
   // the page asks window.claude.use(...) for its database, files and user; js/backend.js answers on Firebase
   window.__backendReady = new Promise((r) => (window.__backendResolve = r));
   window.claude = { use: (name) => window.__backendReady.then((b) => b.use(name)) };
-  // every visitor sees the welcome screen from the first frame, never the desktop loading behind it
-  try { if (!localStorage.getItem("casio-gallery-editor")) document.documentElement.classList.add("gate-first"); } catch (_) { document.documentElement.classList.add("gate-first"); }
+  // from the first frame until the desktop is fully loaded, everyone sees only the welcome animation on blue
+  document.documentElement.classList.add("booting");
 </script>
 <script type="module" src="js/backend.js?v=2"></script>
 </head>
 <body>
-<div id="bootCover" aria-hidden="true"></div>
 <style>
 /* Layout: a crude 2001-era desktop. Low-res dithered ground (or the owner's image), every photo is its own bevelled window, free to drag, stretch and pile up; a grey bar at the bottom. System fonts only, small sizes, no smoothing. Single light look by choice. */
 :root {
@@ -277,8 +276,10 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 #nickGate { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: #000080 repeating-conic-gradient(#000078 0 25%, #000088 0 50%) 0 0 / 4px 4px; color: #000; font-family: Verdana, Geneva, sans-serif; }
 #nickGate[hidden] { display: none; }
-#bootCover { position: fixed; inset: 0; z-index: 2147482000; background: #000080 repeating-conic-gradient(#000078 0 25%, #000088 0 50%) 0 0 / 4px 4px; }
-html.gate-first #nickGate[hidden] { display: flex; }
+/* while loading: the welcome screen with only its animation, right where it sits once the panel shows */
+html.booting #nickGate[hidden] { display: flex; }
+html.booting #nickGate .gpanel { background: none; box-shadow: none; }
+html.booting #nickGate .gpanel > :not(.ganim), html.booting #nickGate .gfoot { visibility: hidden; }
 #nickGate .gpanel { background: #c0c0c0; box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #000, inset 2px 2px 0 #dfdfdf, inset -2px -2px 0 #808080;
   padding: 28px 32px 22px; width: min(360px, calc(100vw - 32px)); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
 #nickGate .ganim { display: block; image-rendering: pixelated; margin: 0 0 18px; max-width: 100%; }
@@ -1555,7 +1556,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     if (matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { WELCOME_ANIM.draw(g, 36); return; }
     gateAnimF = 0; WELCOME_ANIM.draw(g, 0);
     gateAnimT = setInterval(() => {
-      if ($("nickGate").hidden) { clearInterval(gateAnimT); return; }
+      if ($("nickGate").hidden && !document.documentElement.classList.contains("booting")) { clearInterval(gateAnimT); gateAnimT = 0; return; }
       gateAnimF = (gateAnimF + 1) % WELCOME_ANIM.frames; WELCOME_ANIM.draw(g, gateAnimF);
     }, 1000 / WELCOME_ANIM.fps);
   }
@@ -1565,7 +1566,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     gatePreview = !!preview; $("gatePrev").hidden = !gatePreview;
     $("gateTxt").textContent = gatePreview || entry || !myNick ? "welcome :)" : "your nickname";
     drawGateWord();
-    startGateAnim();
+    if (!gateAnimT) startGateAnim();
     inp.value = gatePreview ? "" : (myNick || remoteNick || ""); g.hidden = false;
     setTimeout(() => { inp.focus(); inp.select(); }, 30);
   }
@@ -1602,14 +1603,14 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   // the editor isn't asked; everyone else is, once
   let gateDecided = false;
   const EDITOR_KEY = "casio-gallery-editor";
-  let gateEarly = false;
-  if (document.documentElement.classList.contains("gate-first")) { gateEarly = true; openNickGate(false, true); document.documentElement.classList.remove("gate-first"); }
+  // the animation plays while everything loads; the nickname box only comes in once the desktop is ready
+  let gateWanted = false, bootShown = false;
+  drawGateWord(); startGateAnim();
   function decideGate(isEditor) {
     if (gateDecided) return; gateDecided = true;
     try { if (isEditor) localStorage.setItem(EDITOR_KEY, "1"); else localStorage.removeItem(EDITOR_KEY); } catch (_) {}
-    // the editor isn't asked: close the screen opened early, unless it's the guest preview
-    if (isEditor) { if (gateEarly && !gatePreview && !$("nickGate").dataset.used) $("nickGate").hidden = true; return; }
-    if ($("nickGate").hidden && !$("nickGate").dataset.used) openNickGate(false, true);
+    gateWanted = !isEditor;
+    if (bootShown && gateWanted && $("nickGate").hidden) openNickGate(false, true);
   }
   $("nickBtn").addEventListener("click", () => openNickGate(false));
   $("guestBtn").addEventListener("click", () => openNickGate(true));
@@ -3835,7 +3836,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   }
 
   /* ---------- boot ---------- */
-  // the desktop stays under a plain cover until photos, wallpaper and icons are all in place
+  // the desktop stays behind the welcome animation until photos, wallpaper and icons are all in place
   const boot = { photos: false, desk: false, icons: false };
   let bootDone = false;
   function bootStep(k) { boot[k] = true; if (!bootDone && Object.values(boot).every(Boolean)) finishBoot(); }
@@ -3844,7 +3845,9 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const imgs = [...desk.querySelectorAll("img")].filter((i) => i.loading !== "lazy" && i.offsetParent);
     await Promise.all(imgs.map((i) => i.complete ? null : new Promise((r) => { i.addEventListener("load", r, { once: true }); i.addEventListener("error", r, { once: true }); setTimeout(r, 8000); })));
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const cv = $("bootCover"); if (cv) cv.remove();
+    bootShown = true;
+    document.documentElement.classList.remove("booting");
+    if (gateWanted) openNickGate(false, true);
   }
   setTimeout(finishBoot, 20000);
   if (!galleryMode) openReadme();
