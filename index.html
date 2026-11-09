@@ -203,6 +203,9 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .tx .tx-out { margin: 0; font-family: "Courier New", Courier, monospace; line-height: 1; letter-spacing: 0; white-space: pre; -webkit-user-select: text; user-select: text; }
 .tx label.tx-chk { width: auto; display: flex; align-items: center; gap: 4px; }
 .tx .tx-cusrow[hidden] { display: none; }
+.tx .toolbar button { flex-basis: 30%; }
+.tx .toolbar .tx-desk, .tx .toolbar .tx-share { flex-basis: 45%; }
+.tx .val { width: 46px; white-space: nowrap; }
 .what img { display: block; max-width: 100%; margin: 6px auto; image-rendering: pixelated; border: 1px solid #000; }
 .what .wblock { border-bottom: 1px dotted var(--lo); padding: 4px 0; }
 .what .wtext { width: 100%; box-sizing: border-box; font: 12px var(--serif); border: 2px solid; border-color: #808080 #fff #fff #808080; padding: 3px; resize: vertical; -webkit-user-select: text; user-select: text; }
@@ -3007,7 +3010,6 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const q = (s) => root.querySelector(s);
     root.innerHTML =
       '<div class="toolbar"><select class="tx-src" title="What to draw"></select>' +
-      '<label class="filebtn" title="Use a picture from your computer">Open...<input type="file" accept="image/*" class="tx-file"></label>' +
       '<button type="button" class="tx-copy" title="Copy the text">Copy</button><button type="button" class="tx-txt" title="Save as a text file">.txt</button>' +
       '<button type="button" class="tx-png" title="Save as a picture">PNG</button><button type="button" class="tx-desk" title="Put this picture on your desktop">+ Desktop</button>' +
       '<button type="button" class="tx-share" title="Post this picture in share.exe">+ Share</button></div>' +
@@ -3017,11 +3019,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       '<div class="note tx-setnote"></div></div>' +
       '<div class="group"><span class="lg">Controls</span><div class="tx-ctl"></div></div><div style="height:8px"></div>';
     const sel = q(".tx-src"), out = q(".tx-out"), cap = q(".tx-cap"), paper = q(".tx-paper");
-    // sources: the gallery (starred first), or a picture opened from the computer
-    const list = photos.map((p) => ({ name: nameOf(p), url: srcOf(p), fav: favIds.has(p.id) })).sort((a, b) => b.fav - a.fav);
-    const oFile = el("option", "", "my picture"); oFile.value = "file"; oFile.hidden = true;
+    // sources: the gallery (starred first), then what visitors posted in share.exe, newest first
+    const list = photos.map((p) => ({ name: nameOf(p), url: srcOf(p), fav: favIds.has(p.id) })).sort((a, b) => b.fav - a.fav)
+      .concat(sharedItems.filter((it) => it.img).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .map((it) => ({ name: "\u2197 " + (it.name || "shared") + (it.nick ? " (" + it.nick + ")" : ""), file: it.name || "shared", url: it.img, fav: false })));
     list.forEach((p, i) => { const o = el("option", "", p.name); o.value = String(i); if (p.fav) o.dataset.fav = "1"; sel.append(o); });
-    sel.append(oFile);
     // the sets as buttons
     const setsBox = q(".tx-sets");
     TX_SETS.forEach(([k, label]) => {
@@ -3074,15 +3076,9 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       img.src = url;
     }
     function useSource() {
-      const p = list[+sel.value]; if (p) loadUrl(p.url, p.name.replace(/\.[^.]+$/, ""));
+      const p = list[+sel.value]; if (p) loadUrl(p.url, (p.file || p.name).replace(/\.[^.]+$/, ""));
     }
     sel.addEventListener("change", useSource);
-    q(".tx-file").addEventListener("change", (e) => {
-      const f = e.target.files && e.target.files[0]; if (!f) return;
-      const r = new FileReader();
-      r.onload = () => { oFile.textContent = f.name; sel.value = "file"; sel.dispatchEvent(new Event("retro-refresh")); loadUrl(r.result, f.name.replace(/\.[^.]+$/, "")); };
-      r.readAsDataURL(f); e.target.value = "";
-    });
 
     // brightness per character cell: 0 = paper, 1 = darkest
     function readGrid() {
@@ -3145,7 +3141,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       return lines.join("\n");
     }
     function render() {
-      if (!srcCanvas) { text = ""; out.textContent = ""; cap.textContent = list.length ? " " : "Open a picture to start."; return; }
+      if (!srcCanvas) { text = ""; out.textContent = ""; cap.textContent = list.length ? " " : "No pictures in the gallery yet."; return; }
       // white on black reads the picture the other way round, so it still looks the same
       const g0 = readGrid();
       if (P.neg) for (let i = 0; i < g0.v.length; i++) g0.v[i] = 1 - g0.v[i];
