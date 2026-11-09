@@ -409,6 +409,7 @@ html.booting #nickGate .gpanel > :not(.ganim), html.booting #nickGate .gfoot { v
 .dicon { touch-action: none; user-select: none; }
 .dicon.dragging { opacity: .6; z-index: 6; }
 #shareIcon .ico { width: 40px; height: 40px; margin: -4px 0; }
+#tagIcon .ico { width: 40px; height: 40px; margin: -4px 0; }
 .dicon.drop .ico { outline: 2px dotted #fff; outline-offset: 2px; }
 .dicon.drop .lbl { background: #000080; }
 /* scatter program */
@@ -424,7 +425,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pixfont" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 1"/></feComponentTransfer></filter><filter id="pixfont-soft" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 0.45 0.8 1"/></feComponentTransfer></filter></svg>
 <div id="screen"><div id="raster">
 <canvas id="wall" aria-hidden="true"></canvas>
-<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button><button class="dicon" id="asciiIcon" type="button" hidden style="left:12px;top:732px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">img-txt.exe</span></button><button class="dicon" id="tagIcon" type="button" hidden style="left:12px;top:804px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">tag.exe</span></button></div>
+<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button><button class="dicon" id="asciiIcon" type="button" hidden style="left:12px;top:732px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">img-txt.exe</span></button><button class="dicon" id="tagIcon" type="button" hidden style="left:12px;top:804px"><canvas class="ico" width="20" height="20"></canvas><span class="lbl">tag.exe</span></button></div>
 <footer id="bar" class="bevel">
   <div class="grp" id="grp" hidden><button class="b bevel" id="grpBtn" type="button" aria-haspopup="true"><canvas width="16" height="16"></canvas><span id="grpLbl">photos</span></button><div class="grp-list bevel" id="grpList"><div class="head">Open photos</div></div></div>
   <div class="tasks" id="tasks"></div>
@@ -3416,15 +3417,18 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     return { close() { clearInterval(blinkT); clearTimeout(flushT); if (pending.size) flush(); } };
   }
   function drawTagIcon(c) {
-    // a blue brick wall with ;P! sprayed on in white and a yellow line under it
+    // a light blue brick wall with "hi!!! :)" sprayed in white over a yellow line; the spray can pokes out past the corner
     const g = c.getContext("2d"), R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-    g.clearRect(0, 0, 16, 16);
+    g.clearRect(0, 0, c.width, c.height);
     for (let y = 0; y < 16; y += 4) {
-      for (let x = 0; x < 16; x++) R(x, y, 1, 4, (x + (y / 4 % 2) * 3) % 6 ? "#000080" : "#00006a");
-      R(0, Math.min(y + 3, 15), 16, 1, "#000050");
+      for (let x = 0; x < 16; x++) R(x, y, 1, 4, (x + (y / 4 % 2) * 3) % 6 ? "#4a4ae0" : "#3c3cc8");
+      R(0, Math.min(y + 3, 15), 16, 1, "#2a2aa0");
     }
-    [".w.ww..w", "...w.w.w", ".w.ww..w", ".w.w....", "w..w...w"].forEach((row, y) => [...row].forEach((ch, x) => { if (ch === "w") R(4 + x, 4 + y, 1, 1, "#fff"); }));
-    R(2, 11, 12, 1, "#ffe24a");
+    ["w...w.w.w.w..w.", "w.....w.w.w.w.w", "ww..w.w.w.w...w", "w.w.w.......w.w", "w.w.w.w.w.w..w."].forEach((row, y) => [...row].forEach((ch, x) => { if (ch === "w") R(1 + x, 3 + y, 1, 1, "#fff"); }));
+    R(1, 10, 13, 1, "#ffe24a");
+    // the can, a little higher than the line, with a puff of paint
+    R(15, 8, 1, 1, "#000"); R(14, 9, 3, 1, "#c0c0c0"); R(14, 10, 3, 8, "#660000"); R(14, 12, 3, 1, "#fff"); R(16, 10, 1, 8, "#3a0000");
+    [[13, 8], [12, 9], [12, 7], [11, 8]].forEach(([x, y]) => R(x, y, 1, 1, "#fff"));
   }
   const tgIcon = $("tagIcon");
   drawTagIcon(tgIcon.querySelector(".ico"));
