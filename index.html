@@ -15,6 +15,7 @@
 <script type="module" src="js/backend.js?v=2"></script>
 </head>
 <body>
+<div id="bootCover" aria-hidden="true"></div>
 <style>
 /* Layout: a crude 2001-era desktop. Low-res dithered ground (or the owner's image), every photo is its own bevelled window, free to drag, stretch and pile up; a grey bar at the bottom. System fonts only, small sizes, no smoothing. Single light look by choice. */
 :root {
@@ -274,6 +275,7 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 #nickGate { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: #000080 repeating-conic-gradient(#000078 0 25%, #000088 0 50%) 0 0 / 4px 4px; color: #000; font-family: Verdana, Geneva, sans-serif; }
 #nickGate[hidden] { display: none; }
+#bootCover { position: fixed; inset: 0; z-index: 2147482000; background: #000080 repeating-conic-gradient(#000078 0 25%, #000088 0 50%) 0 0 / 4px 4px; }
 html.gate-first #nickGate[hidden] { display: flex; }
 #nickGate .gpanel { background: #c0c0c0; box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #000, inset 2px 2px 0 #dfdfdf, inset -2px -2px 0 #808080;
   padding: 28px 32px 22px; width: min(360px, calc(100vw - 32px)); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
@@ -501,12 +503,14 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   if (window.visualViewport) { visualViewport.addEventListener("resize", onResize); visualViewport.addEventListener("scroll", onResize); }
   // the owner's own background: stretched to the screen's shape and drawn at the same coarse resolution
   function setWallpaper(url) {
-    if (!url) { bgImg = null; drawWall(); return; }
-    if (bgImg && bgImg.dataset.src === url) return;
-    const im = new Image(); im.dataset.src = url;
-    im.onload = () => { bgImg = im; drawWall(); };
-    im.onerror = () => { bgImg = null; drawWall(); };
-    im.src = url;
+    return new Promise((done) => {
+      if (!url) { bgImg = null; drawWall(); done(); return; }
+      if (bgImg && bgImg.dataset.src === url) { done(); return; }
+      const im = new Image(); im.dataset.src = url;
+      im.onload = () => { bgImg = im; drawWall(); done(); };
+      im.onerror = () => { bgImg = null; drawWall(); done(); };
+      im.src = url;
+    });
   }
 
   /* ---------- little pictograms for the bar (drawn on an 18x14 grid) ---------- */
@@ -3856,15 +3860,27 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   }
 
   /* ---------- boot ---------- */
+  // the desktop stays under a plain cover until photos, wallpaper and icons are all in place
+  const boot = { photos: false, desk: false, icons: false };
+  let bootDone = false;
+  function bootStep(k) { boot[k] = true; if (!bootDone && Object.values(boot).every(Boolean)) finishBoot(); }
+  async function finishBoot() {
+    if (bootDone) return; bootDone = true;
+    const imgs = [...desk.querySelectorAll("img")].filter((i) => i.loading !== "lazy" && i.offsetParent);
+    await Promise.all(imgs.map((i) => i.complete ? null : new Promise((r) => { i.addEventListener("load", r, { once: true }); i.addEventListener("error", r, { once: true }); setTimeout(r, 8000); })));
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const cv = $("bootCover"); if (cv) cv.remove();
+  }
+  setTimeout(finishBoot, 20000);
   if (!galleryMode) openReadme();
   (async () => {
     const c = window.claude;
-    if (!c || !c.use) { decideGate(false); loadMsg = "Couldn't reach the gallery. Try again in a moment."; openIndex(); return; }
+    if (!c || !c.use) { decideGate(false); finishBoot(); loadMsg = "Couldn't reach the gallery. Try again in a moment."; openIndex(); return; }
     const [d, a] = await Promise.all([c.use("db"), c.use("assets")]);
     db = d; assets = a; canWrite = !!(d && a);
     if (readme) { readme.el.remove(); readme.task.remove(); readme = null; }
     applyMode();
-    if (!db) { decideGate(false); loadMsg = "Couldn't reach the gallery. Try again in a moment."; openIndex(); return; }
+    if (!db) { decideGate(false); finishBoot(); loadMsg = "Couldn't reach the gallery. Try again in a moment."; openIndex(); return; }
     userCap = await c.use("user");
     try { meId = userCap ? await userCap.id() : null; } catch (_) { meId = null; }
     if (meId) {
@@ -3884,8 +3900,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     pushNick();
     db.doc("settings/cam").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; camPhoto = d.photo || null; camManual = d.manual || null; if (!whatDraft) renderWhat(); }, () => {});
     db.doc("settings/about").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; aboutBlocks = d.blocks || null; camBlocks = d.cam || null; if (!whatDraft) renderWhat(); }, () => {});
-    db.doc("settings/icons").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; const next = d.spots || null; if (!next && canWrite && !galleryMode) { saveIconSpots(); return; } if (JSON.stringify(next) === JSON.stringify(publicSpots)) return; publicSpots = next; loadIconSpots(); }, () => {});
-    db.collection("settings").doc("desk").onSnapshot((s) => { const v = s.exists ? s.data() : null; setWallpaper(v && (v.bgUrl || (v.bgAssetId && "/_blob/" + v.bgAssetId))); }, () => {});
+    db.doc("settings/icons").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; const next = d.spots || null; if (!next && canWrite && !galleryMode) { saveIconSpots(); bootStep("icons"); return; } if (JSON.stringify(next) === JSON.stringify(publicSpots)) { bootStep("icons"); return; } publicSpots = next; loadIconSpots(); bootStep("icons"); }, () => bootStep("icons"));
+    db.collection("settings").doc("desk").onSnapshot((s) => { const v = s.exists ? s.data() : null; setWallpaper(v && (v.bgUrl || (v.bgAssetId && "/_blob/" + v.bgAssetId))).then(() => bootStep("desk")); }, () => bootStep("desk"));
     let firstSnap = true;
     db.collection("photos").orderBy("createdAt", "asc").onSnapshot((snap) => {
       ready = true;
@@ -3900,7 +3916,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       if (!photos.length) openIndex(); else renderIndex();
       if (firstSnap && readme) focusWin(readme);
       firstSnap = false;
-    }, () => { loadMsg = "Couldn't load the gallery."; openIndex(); });
+      bootStep("photos");
+    }, () => { loadMsg = "Couldn't load the gallery."; openIndex(); finishBoot(); });
   })();
 })();
 </script>
