@@ -491,9 +491,14 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const LW = PHONE ? 420 : innerWidth;
     S = innerWidth / LW;
     // the height you can actually see: on iPhones the browser's own bars can cover part of innerHeight
-    const vv = window.visualViewport, visH = Math.min(innerHeight, document.documentElement.clientHeight || innerHeight, vv ? vv.height : innerHeight);
+    const vv = window.visualViewport;
+    let visH = Math.min(innerHeight, document.documentElement.clientHeight || innerHeight, vv ? vv.height : innerHeight);
+    // an on-screen keyboard (iPad, phones) shrinks the visible area while typing; keep the desktop its full height meanwhile
+    const ae = document.activeElement, typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
+    if (typing && fitScreen.h && visH < fitScreen.h && fitScreen.w === innerWidth) visH = fitScreen.h;
+    else { fitScreen.h = visH; fitScreen.w = innerWidth; }
     const sc = $("screen"), rs = $("raster"), LH = Math.floor(visH / S);
-    sc.style.top = (vv ? vv.offsetTop : 0) + "px";
+    sc.style.top = (vv && !typing ? vv.offsetTop : 0) + "px";
     rs.style.width = LW + "px"; rs.style.height = LH + "px";
     sc.style.width = LW + "px"; sc.style.height = LH + "px";
     sc.style.transform = "scale(" + S + ")";
@@ -518,6 +523,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   let rz; const onResize = () => { fitScreen(); clearTimeout(rz); rz = setTimeout(() => { drawWall(); dispatchEvent(new Event("layoutchange")); }, 150); };
   addEventListener("resize", onResize);
   if (window.visualViewport) { visualViewport.addEventListener("resize", onResize); visualViewport.addEventListener("scroll", onResize); }
+  // when the keyboard goes away, measure again once it has finished closing
+  document.addEventListener("focusout", () => setTimeout(() => { if (!document.activeElement || document.activeElement === document.body) { fitScreen.h = 0; onResize(); } }, 350));
   // the owner's own background: stretched to the screen's shape and drawn at the same coarse resolution
   function setWallpaper(url) {
     return new Promise((done) => {
@@ -1583,7 +1590,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     drawGateWord();
     if (!gateAnimT) startGateAnim();
     inp.value = gatePreview ? "" : (myNick || remoteNick || ""); g.hidden = false;
-    setTimeout(() => { inp.focus(); inp.select(); }, 30);
+    // on touch screens don't pop the keyboard up on arrival; the visitor taps the box when they want to
+    if (!matchMedia("(pointer: coarse)").matches) setTimeout(() => { inp.focus(); inp.select(); }, 30);
   }
   let remoteNick = "";
   async function pushNick() {
