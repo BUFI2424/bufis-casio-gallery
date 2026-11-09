@@ -193,17 +193,16 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .gx .chglist .empty { color: #555; font-family: inherit; }
 .gx .hexinfo { font-size: 10px; margin-top: 6px; line-height: 1.4; word-break: break-word; }
 .gx .hidden { display: none; }
-/* ascii.exe */
+/* img-txt.exe */
 .tx .row { margin: 6px 6px 0; }
-.tx .tx-emrow label { width: 78px; }
-.tx .tx-emrow input, .tx .tx-cusrow input { flex: 1; min-width: 0; font: 16px "Courier New", Courier, monospace; padding: 2px 4px; background: #fff; border: 2px solid; border-color: #808080 #fff #fff #808080; -webkit-user-select: text; user-select: text; }
+.tx .tx-cusrow input { flex: 1; min-width: 0; font: 16px "Courier New", Courier, monospace; padding: 2px 4px; background: #fff; border: 2px solid; border-color: #808080 #fff #fff #808080; -webkit-user-select: text; user-select: text; }
 .tx .group .row { margin: 8px 0 0; }
 .tx .modes { grid-template-columns: 1fr 1fr 1fr; }
 .tx .tx-paper { width: 100%; background: #fff; color: #000; padding: 6px; border: 2px solid; border-color: #000 #fff #fff #000; overflow: hidden; display: flex; justify-content: center; }
 .tx .tx-paper.neg { background: #000; color: #fff; }
 .tx .tx-out { margin: 0; font-family: "Courier New", Courier, monospace; line-height: 1; letter-spacing: 0; white-space: pre; -webkit-user-select: text; user-select: text; }
 .tx label.tx-chk { width: auto; display: flex; align-items: center; gap: 4px; }
-.tx .tx-cusrow[hidden], .tx .tx-emrow[hidden] { display: none; }
+.tx .tx-cusrow[hidden] { display: none; }
 .what img { display: block; max-width: 100%; margin: 6px auto; image-rendering: pixelated; border: 1px solid #000; }
 .what .wblock { border-bottom: 1px dotted var(--lo); padding: 4px 0; }
 .what .wtext { width: 100%; box-sizing: border-box; font: 12px var(--serif); border: 2px solid; border-color: #808080 #fff #fff #808080; padding: 3px; resize: vertical; -webkit-user-select: text; user-select: text; }
@@ -408,7 +407,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pixfont" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 1"/></feComponentTransfer></filter><filter id="pixfont-soft" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 0.45 0.8 1"/></feComponentTransfer></filter></svg>
 <div id="screen"><div id="raster">
 <canvas id="wall" aria-hidden="true"></canvas>
-<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button><button class="dicon" id="asciiIcon" type="button" hidden style="left:12px;top:732px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">ascii.exe</span></button></div>
+<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button><button class="dicon" id="asciiIcon" type="button" hidden style="left:12px;top:732px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">img-txt.exe</span></button></div>
 <footer id="bar" class="bevel">
   <div class="grp" id="grp" hidden><button class="b bevel" id="grpBtn" type="button" aria-haspopup="true"><canvas width="16" height="16"></canvas><span id="grpLbl">photos</span></button><div class="grp-list bevel" id="grpList"><div class="head">Open photos</div></div></div>
   <div class="tasks" id="tasks"></div>
@@ -1168,7 +1167,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       ["favs!", "your starred photos"],
       ["capture", "picture of the desktop"],
       ["glitch", "corrupt, dither, shuffle a photo"],
-      ["ascii", "a photo or emoji in letters"],
+      ["img-txt", "a photo redrawn in characters"],
       ["share", "pictures everyone posted"],
       ["what?", "what this site is"]
     ]);
@@ -2943,12 +2942,14 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const build = () => {
       list.replaceChildren();
       [...sel.options].forEach((o, i) => {
+        if (o.hidden && i !== sel.selectedIndex) return;
         const it = el("div", "rsel-item" + (i === sel.selectedIndex ? " on" : "")); it.setAttribute("role", "option"); it.append(label(o));
         it.addEventListener("pointerdown", (e) => e.preventDefault());
         it.addEventListener("click", () => { pick(i); list.hidden = true; });
         list.append(it);
       });
     };
+    sel.addEventListener("retro-refresh", show);
     box.addEventListener("click", () => { if (list.hidden) { build(); list.hidden = false; const on = list.querySelector(".on"); on && on.scrollIntoView({ block: "nearest" }); } else list.hidden = true; });
     box.addEventListener("keydown", (e) => {
       if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); pick(sel.selectedIndex + (e.key === "ArrowDown" ? 1 : -1)); if (!list.hidden) build(); }
@@ -2980,7 +2981,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   });
   wireIcon(cIcon, openCapture);
 
-  /* ---------- ascii.exe: a photo, a file or an emoji redrawn with letters and symbols ---------- */
+  /* ---------- img-txt.exe: a photo or a picture file redrawn with letters and symbols ---------- */
   let asciiWin = null;
   // each set runs from empty paper to the darkest mark
   const TX_SETS = [
@@ -2992,18 +2993,17 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     ["lines", "Lines", ""],
     ["custom", "My own", ""]
   ];
-  const TX_EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Segoe UI Symbol",sans-serif';
   function openAscii() {
     if (asciiWin) { focusWin(asciiWin); return; }
     const W = desk.clientWidth, H = desk.clientHeight;
     const ww = Math.min(360, W - 16), hh = Math.min(640, H - 16);
-    asciiWin = makeWin("ascii.exe", { x: Math.max(8, Math.round((W - ww) / 2 + 120)), y: Math.max(8, Math.round((H - hh) / 2)), w: ww, h: hh }, { closable: true, onClose: () => { asciiWin = null; } });
+    asciiWin = makeWin("img-txt.exe", { x: Math.max(8, Math.round((W - ww) / 2 + 120)), y: Math.max(8, Math.round((H - hh) / 2)), w: ww, h: hh }, { closable: true, onClose: () => { asciiWin = null; } });
     const root = el("div", "gx tx"); asciiWin.body.append(root);
-    try { initAscii(root); } catch (_) { root.textContent = "ascii.exe couldn't start."; }
+    try { initAscii(root); } catch (_) { root.textContent = "img-txt.exe couldn't start."; }
   }
   function initAscii(root) {
     const P = { cols: 32, set: "classic", custom: " -+#", contrast: 100, bright: 0, edge: 45, dither: false, neg: false };
-    let srcCanvas = null, srcName = "emoji", text = "", grid = null;
+    let srcCanvas = null, srcName = "picture", text = "", grid = null;
     const q = (s) => root.querySelector(s);
     root.innerHTML =
       '<div class="toolbar"><select class="tx-src" title="What to draw"></select>' +
@@ -3011,18 +3011,17 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       '<button type="button" class="tx-copy" title="Copy the text">Copy</button><button type="button" class="tx-txt" title="Save as a text file">.txt</button>' +
       '<button type="button" class="tx-png" title="Save as a picture">PNG</button><button type="button" class="tx-desk" title="Put this picture on your desktop">+ Desktop</button>' +
       '<button type="button" class="tx-share" title="Post this picture in share.exe">+ Share</button></div>' +
-      '<div class="row tx-emrow"><label>Emoji / text</label><input type="text" class="tx-emoji" maxlength="8" spellcheck="false"></div>' +
       '<div class="viewer"><div class="tx-paper"><pre class="tx-out"></pre></div><div class="caption tx-cap">&nbsp;</div></div>' +
       '<div class="group"><span class="lg">Characters</span><div class="modes tx-sets"></div>' +
       '<div class="row tx-cusrow"><label>Mine</label><input type="text" class="tx-custom" maxlength="24" spellcheck="false"></div>' +
       '<div class="note tx-setnote"></div></div>' +
       '<div class="group"><span class="lg">Controls</span><div class="tx-ctl"></div></div><div style="height:8px"></div>';
-    const sel = q(".tx-src"), out = q(".tx-out"), cap = q(".tx-cap"), emIn = q(".tx-emoji"), paper = q(".tx-paper");
-    // sources: an emoji or a few letters typed in, then the gallery (starred first)
+    const sel = q(".tx-src"), out = q(".tx-out"), cap = q(".tx-cap"), paper = q(".tx-paper");
+    // sources: the gallery (starred first), or a picture opened from the computer
     const list = photos.map((p) => ({ name: nameOf(p), url: srcOf(p), fav: favIds.has(p.id) })).sort((a, b) => b.fav - a.fav);
-    const o0 = el("option", "", "☺ emoji or text"); o0.value = "emoji"; sel.append(o0);
+    const oFile = el("option", "", "my picture"); oFile.value = "file"; oFile.hidden = true;
     list.forEach((p, i) => { const o = el("option", "", p.name); o.value = String(i); if (p.fav) o.dataset.fav = "1"; sel.append(o); });
-    emIn.value = "🙂";
+    sel.append(oFile);
     // the sets as buttons
     const setsBox = q(".tx-sets");
     TX_SETS.forEach(([k, label]) => {
@@ -3060,23 +3059,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     }
     buildControls();
 
-    // the picture to read: an emoji/text drawn big and cropped, or an image scaled down
-    function emojiCanvas(t) {
-      const fs = 120, c = document.createElement("canvas"), g = c.getContext("2d");
-      g.font = fs + "px " + TX_EMOJI_FONT;
-      const w = Math.max(fs, Math.ceil(g.measureText(t).width) + 40);
-      c.width = w; c.height = fs * 1.6;
-      g.font = fs + "px " + TX_EMOJI_FONT; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000";
-      g.fillText(t, w / 2, c.height / 2);
-      const d = g.getImageData(0, 0, c.width, c.height).data;
-      let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
-      for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 16) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-      if (x1 < 0) return null;
-      const m = 6, out = document.createElement("canvas");
-      out.width = x1 - x0 + 1 + m * 2; out.height = y1 - y0 + 1 + m * 2;
-      out.getContext("2d").drawImage(c, x0 - m, y0 - m, out.width, out.height, 0, 0, out.width, out.height);
-      return out;
-    }
+    // the picture to read, scaled down
     function imageCanvas(img) {
       const k = Math.min(1, 480 / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
       const c = document.createElement("canvas");
@@ -3091,17 +3074,13 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       img.src = url;
     }
     function useSource() {
-      const v = sel.value;
-      q(".tx-emrow").hidden = v !== "emoji";
-      if (v === "emoji") { srcCanvas = emojiCanvas(emIn.value.trim()); srcName = "emoji"; render(); return; }
-      const p = list[+v]; if (p) loadUrl(p.url, p.name.replace(/\.[^.]+$/, ""));
+      const p = list[+sel.value]; if (p) loadUrl(p.url, p.name.replace(/\.[^.]+$/, ""));
     }
     sel.addEventListener("change", useSource);
-    emIn.addEventListener("input", () => { if (sel.value === "emoji") useSource(); });
     q(".tx-file").addEventListener("change", (e) => {
       const f = e.target.files && e.target.files[0]; if (!f) return;
       const r = new FileReader();
-      r.onload = () => { q(".tx-emrow").hidden = true; loadUrl(r.result, f.name.replace(/\.[^.]+$/, "")); };
+      r.onload = () => { oFile.textContent = f.name; sel.value = "file"; sel.dispatchEvent(new Event("retro-refresh")); loadUrl(r.result, f.name.replace(/\.[^.]+$/, "")); };
       r.readAsDataURL(f); e.target.value = "";
     });
 
@@ -3166,7 +3145,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       return lines.join("\n");
     }
     function render() {
-      if (!srcCanvas) { text = ""; out.textContent = ""; cap.textContent = sel.value === "emoji" ? "Type an emoji or a few letters." : " "; return; }
+      if (!srcCanvas) { text = ""; out.textContent = ""; cap.textContent = list.length ? " " : "Open a picture to start."; return; }
       // white on black reads the picture the other way round, so it still looks the same
       const g0 = readGrid();
       if (P.neg) for (let i = 0; i < g0.v.length; i++) g0.v[i] = 1 - g0.v[i];
@@ -3223,8 +3202,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   drawAsciiIcon(txIcon.querySelector(".ico"));
   wireIcon(txIcon, () => {
     if (asciiWin) { focusWin(asciiWin); return; }
-    runLoader("ascii", "ascii.exe", drawAsciiIcon, [
-      [25, "Starting ascii.exe..."], [60, "Loading characters..."],
+    runLoader("ascii", "img-txt.exe", drawAsciiIcon, [
+      [25, "Starting img-txt.exe..."], [60, "Loading characters..."],
       [90, () => "Reading " + photos.length + " photos..."], [100, "Ready."]], openAscii);
   });
 
