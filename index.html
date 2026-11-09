@@ -9,6 +9,8 @@
   // the page asks window.claude.use(...) for its database, files and user; js/backend.js answers on Firebase
   window.__backendReady = new Promise((r) => (window.__backendResolve = r));
   window.claude = { use: (name) => window.__backendReady.then((b) => b.use(name)) };
+  // a visitor who hasn't picked a nickname sees the welcome screen from the first frame, never the desktop loading behind it
+  try { if (!localStorage.getItem("casio-gallery-nick") && !localStorage.getItem("casio-gallery-editor")) document.documentElement.classList.add("gate-first"); } catch (_) { document.documentElement.classList.add("gate-first"); }
 </script>
 <script type="module" src="js/backend.js?v=2"></script>
 </head>
@@ -261,6 +263,7 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 #nickGate { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: #000080 repeating-conic-gradient(#000078 0 25%, #000088 0 50%) 0 0 / 4px 4px; color: #000; font-family: Verdana, Geneva, sans-serif; }
 #nickGate[hidden] { display: none; }
+html.gate-first #nickGate[hidden] { display: flex; }
 #nickGate .gpanel { background: #c0c0c0; box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #000, inset 2px 2px 0 #dfdfdf, inset -2px -2px 0 #808080;
   padding: 28px 32px 22px; width: min(360px, calc(100vw - 32px)); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
 #nickGate .ganim { display: block; image-rendering: pixelated; margin: 0 0 18px; max-width: 100%; }
@@ -1579,7 +1582,16 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   $("gateClose").addEventListener("click", () => { $("nickGate").hidden = true; });
   // the editor isn't asked; everyone else is, once
   let gateDecided = false;
-  function decideGate(isEditor) { if (gateDecided) return; gateDecided = true; if (!isEditor && !myNick) openNickGate(false); }
+  const EDITOR_KEY = "casio-gallery-editor";
+  let gateEarly = false;
+  if (document.documentElement.classList.contains("gate-first")) { gateEarly = true; openNickGate(false); document.documentElement.classList.remove("gate-first"); }
+  function decideGate(isEditor) {
+    if (gateDecided) return; gateDecided = true;
+    try { if (isEditor) localStorage.setItem(EDITOR_KEY, "1"); else localStorage.removeItem(EDITOR_KEY); } catch (_) {}
+    // the editor isn't asked: close the screen opened early, unless it's the guest preview
+    if (isEditor) { if (gateEarly && !gatePreview && !myNick) $("nickGate").hidden = true; return; }
+    if (!myNick && $("nickGate").hidden) openNickGate(false);
+  }
   $("nickBtn").addEventListener("click", () => openNickGate(false));
   $("guestBtn").addEventListener("click", () => openNickGate(true));
   showNickBtn();
