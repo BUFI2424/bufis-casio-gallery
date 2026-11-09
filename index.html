@@ -209,21 +209,13 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .tg { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #c0c0c0; color: #000; font: 12px Tahoma, Geneva, Arial, sans-serif; }
 .tg-bar { display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-bottom: 1px solid #808080; flex-wrap: wrap; }
 .tg-bar button { font: 12px Tahoma, Geneva, Arial, sans-serif; color: #000; background: #c0c0c0; border: 2px solid; border-color: #fff #000 #000 #fff; padding: 1px 7px; cursor: pointer; }
-.tg-bar button:active, .tg-bar button.on { border-color: #000 #fff #fff #000; }
+.tg-bar button:active { border-color: #000 #fff #fff #000; }
 .tg-z { min-width: 40px; text-align: center; background: #fff; border: 1px solid; border-color: #808080 #fff #fff #808080; padding: 1px 3px; font-size: 11px; }
-.tg-cols { display: flex; gap: 3px; margin-left: 6px; }
-.tg-bar .tg-sw { width: 18px; height: 18px; padding: 0; }
 .tg-hint { margin-left: auto; font-size: 10px; color: #404040; }
-.tg-view { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #202020; border: 2px solid; border-color: #000 #fff #fff #000; touch-action: none; cursor: crosshair; }
+.tg-view { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #660000; border: 2px solid; border-color: #000 #fff #fff #000; touch-action: none; cursor: text; }
 .tg-view.panning { cursor: grabbing; }
-.tg-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; background: #404040 radial-gradient(#525252 1px, transparent 1px) 0 0 / 40px 40px; }
-.tg-note { position: absolute; max-width: 280px; font: 14px/1.3 Verdana, Geneva, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; cursor: default; -webkit-user-select: text; user-select: text; }
-.tg-note .tg-by { display: block; font-size: 10px; color: #c0c0c0; margin-top: 1px; }
-.tg-del { position: absolute; top: -8px; right: -16px; display: none; font: 9px/1 Arial, sans-serif; color: #000; background: #c0c0c0; border: 1px solid #000; padding: 1px 3px; cursor: pointer; }
-.tg-note:hover .tg-del { display: block; }
-@media (hover: none) { .tg-del { display: block; } }
-.tg-edit { position: absolute; width: 220px; height: 60px; font: 14px/1.3 Verdana, Geneva, sans-serif; background: rgba(0, 0, 0, 0.25); border: 1px dashed #c0c0c0; resize: none; outline: none; padding: 2px; -webkit-user-select: text; user-select: text; }
-.tg-edit::placeholder { color: #808080; }
+.tg-cv { position: absolute; left: 0; top: 0; display: block; }
+.tg-in-txt { position: absolute; width: 20px; height: 20px; padding: 0; border: 0; opacity: 0; resize: none; font-size: 16px; color: transparent; background: transparent; caret-color: transparent; -webkit-user-select: text; user-select: text; }
 .what img { display: block; max-width: 100%; margin: 6px auto; image-rendering: pixelated; border: 1px solid #000; }
 .what .wblock { border-bottom: 1px dotted var(--lo); padding: 4px 0; }
 .what .wtext { width: 100%; box-sizing: border-box; font: 12px var(--serif); border: 2px solid; border-color: #808080 #fff #fff #808080; padding: 3px; resize: vertical; -webkit-user-select: text; user-select: text; }
@@ -1191,7 +1183,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       ["capture", "picture of the desktop"],
       ["glitch", "corrupt, dither, shuffle a photo"],
       ["img-txt", "a photo redrawn in characters"],
-      ["tag", "a board for everyone's notes"],
+      ["tag", "a wall everyone types on"],
       ["share", "pictures everyone posted"],
       ["what?", "what this site is"]
     ]);
@@ -3224,65 +3216,86 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       [90, () => "Reading " + photos.length + " photos..."], [100, "Ready."]], openAscii);
   });
 
-  /* ---------- tag.exe: a shared board where anyone writes a note anywhere ---------- */
+  /* ---------- tag.exe: a shared wall of text, typed letter by letter anywhere on an endless grid ---------- */
+  // the wall is cut into tiles of 16 x 8 characters; each tile is one record, tags/<tx>_<ty>, holding only the cells in use
   let tagWin = null, tagUnsub = null;
-  const TAG_W = 2000, TAG_H = 1300, TAG_COLORS = ["#ffffff", "#ffe24a", "#ff9fbf", "#9fd0ff"];
-  let tagLast = 0;
+  const TG_TW = 16, TG_TH = 8, TG_CW = 10, TG_CH = 18;
   function openTag() {
     if (tagWin) { focusWin(tagWin); return; }
     const W = desk.clientWidth, H = desk.clientHeight;
     const ww = Math.min(640, W - 16), hh = Math.min(460, H - 16);
-    tagWin = makeWin("tag.exe", { x: Math.max(8, Math.round((W - ww) / 2)), y: Math.max(8, Math.round((H - hh) / 2)), w: ww, h: hh }, { closable: true, onClose: () => { tagWin = null; if (tagUnsub) { try { tagUnsub(); } catch (_) {} tagUnsub = null; } } });
+    let api = null;
+    tagWin = makeWin("tag.exe", { x: Math.max(8, Math.round((W - ww) / 2)), y: Math.max(8, Math.round((H - hh) / 2)), w: ww, h: hh }, { closable: true, onClose: () => { tagWin = null; if (api) api.close(); if (tagUnsub) { try { tagUnsub(); } catch (_) {} tagUnsub = null; } } });
     const root = el("div", "tg"); tagWin.body.append(root);
-    try { initTag(root); } catch (_) { root.textContent = "tag.exe couldn't start."; }
+    try { api = initTag(root); } catch (_) { root.textContent = "tag.exe couldn't start."; }
   }
   function initTag(root) {
     root.innerHTML = '<div class="tg-bar"><button type="button" class="tg-out" title="Zoom out" aria-label="Zoom out">−</button><span class="tg-z">100%</span>' +
-      '<button type="button" class="tg-in" title="Zoom in" aria-label="Zoom in">+</button><button type="button" class="tg-fit" title="See the whole board">all</button>' +
-      '<span class="tg-cols"></span><span class="tg-hint">click anywhere on the board to write</span></div>' +
-      '<div class="tg-view"><div class="tg-world"></div></div>';
-    const view = root.querySelector(".tg-view"), world = root.querySelector(".tg-world"), zl = root.querySelector(".tg-z"), hint = root.querySelector(".tg-hint");
-    world.style.width = TAG_W + "px"; world.style.height = TAG_H + "px";
-    let s = 1, tx = 0, ty = 0, color = TAG_COLORS[0], editing = null, centred = false;
-    const say = (t) => { hint.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => { hint.textContent = "click anywhere on the board to write"; }, 3500); };
-    // colours for the next note
-    const cols = root.querySelector(".tg-cols");
-    TAG_COLORS.forEach((c, i) => {
-      const b = el("button", "tg-sw" + (i === 0 ? " on" : "")); b.type = "button"; b.style.background = c; b.title = "Write in this colour"; b.setAttribute("aria-label", "colour " + (i + 1));
-      b.addEventListener("click", () => { color = c; cols.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); if (editing) editing.style.color = c; });
-      cols.append(b);
-    });
+      '<button type="button" class="tg-in" title="Zoom in" aria-label="Zoom in">+</button><button type="button" class="tg-home" title="Back to the start of the wall">home</button>' +
+      '<span class="tg-hint">click anywhere and type</span></div>' +
+      '<div class="tg-view"><canvas class="tg-cv"></canvas><textarea class="tg-in-txt" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Type on the wall"></textarea></div>';
+    const view = root.querySelector(".tg-view"), cv = root.querySelector(".tg-cv"), inp = root.querySelector(".tg-in-txt");
+    const zl = root.querySelector(".tg-z"), hint = root.querySelector(".tg-hint");
+    const cells = new Map();          // "x,y" -> character, from the wall
+    const mine = new Map();           // what this visitor typed and hasn't been confirmed yet
+    let s = 1, ox = -2, oy = -2;      // zoom and the top-left corner of the view, in cells
+    let cur = null, lineStart = 0, focused = false, blink = true;
+    const say = (t) => { hint.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => { hint.textContent = "click anywhere and type"; }, 3500); };
+    const key = (x, y) => x + "," + y;
+    const charAt = (x, y) => { const k = key(x, y); return mine.has(k) ? mine.get(k) : (cells.get(k) || ""); };
+
+    // drawing
+    let raf = 0;
+    const draw = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    function paint() {
+      raf = 0;
+      const dpr = window.devicePixelRatio || 1, w = view.clientWidth, h = view.clientHeight;
+      if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.width = w + "px"; cv.style.height = h + "px"; }
+      const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.fillStyle = "#660000"; g.fillRect(0, 0, w, h);
+      const cw = TG_CW * s, ch = TG_CH * s;
+      const x0 = Math.floor(ox), y0 = Math.floor(oy), x1 = Math.ceil(ox + w / cw), y1 = Math.ceil(oy + h / ch);
+      if (cur && focused && blink && cur.x >= x0 && cur.x <= x1 && cur.y >= y0 && cur.y <= y1) { g.fillStyle = "#ffffe1"; g.fillRect((cur.x - ox) * cw, (cur.y - oy) * ch, cw, ch); }
+      else if (cur) { g.strokeStyle = "#ffffe1"; g.lineWidth = 1; g.strokeRect((cur.x - ox) * cw + 0.5, (cur.y - oy) * ch + 0.5, cw - 1, ch - 1); }
+      g.font = Math.max(2, Math.round(ch * 0.78)) + 'px "Courier New", Courier, monospace'; g.textBaseline = "middle"; g.textAlign = "center";
+      const paintCell = (x, y, c) => {
+        if (x < x0 || x > x1 || y < y0 || y > y1 || !c || c === " ") return;
+        g.fillStyle = cur && focused && blink && cur.x === x && cur.y === y ? "#660000" : "#ff6600";
+        g.fillText(c, (x - ox + 0.5) * cw, (y - oy + 0.55) * ch);
+      };
+      for (const [k, c] of cells) { if (mine.has(k)) continue; const i = k.indexOf(","); paintCell(+k.slice(0, i), +k.slice(i + 1), c); }
+      for (const [k, c] of mine) { const i = k.indexOf(","); paintCell(+k.slice(0, i), +k.slice(i + 1), c); }
+      zl.textContent = Math.round(s * 100) + "%";
+    }
+    const blinkT = setInterval(() => { if (focused && cur) { blink = !blink; draw(); } }, 530);
+
     // zoom and pan
-    const minS = () => Math.min(1, view.clientWidth / TAG_W, view.clientHeight / TAG_H);
-    const clampPan = () => {
-      const vw = view.clientWidth, vh = view.clientHeight, w = TAG_W * s, h = TAG_H * s;
-      tx = w <= vw ? (vw - w) / 2 : Math.min(0, Math.max(vw - w, tx));
-      ty = h <= vh ? (vh - h) / 2 : Math.min(0, Math.max(vh - h, ty));
-    };
-    const apply = () => { clampPan(); world.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + s + ")"; zl.textContent = Math.round(s * 100) + "%"; };
-    const zoomAt = (ns, cx, cy) => { ns = Math.min(3, Math.max(minS(), ns)); const wx = (cx - tx) / s, wy = (cy - ty) / s; s = ns; tx = cx - wx * s; ty = cy - wy * s; apply(); };
-    const centreOn = (wx, wy) => { tx = view.clientWidth / 2 - wx * s; ty = view.clientHeight / 2 - wy * s; apply(); };
+    const local = (e) => { const r = view.getBoundingClientRect(); return [(e.clientX - r.left) / S, (e.clientY - r.top) / S]; };
+    const zoomAt = (ns, px, py) => { ns = Math.min(4, Math.max(0.2, ns)); const wx = ox + px / (TG_CW * s), wy = oy + py / (TG_CH * s); s = ns; ox = wx - px / (TG_CW * s); oy = wy - py / (TG_CH * s); draw(); };
     const mid = () => [view.clientWidth / 2, view.clientHeight / 2];
     root.querySelector(".tg-in").addEventListener("click", () => zoomAt(s * 1.25, ...mid()));
     root.querySelector(".tg-out").addEventListener("click", () => zoomAt(s / 1.25, ...mid()));
-    root.querySelector(".tg-fit").addEventListener("click", () => { s = minS(); apply(); });
-    const local = (e) => { const r = view.getBoundingClientRect(); return [(e.clientX - r.left) / S, (e.clientY - r.top) / S]; };
-    view.addEventListener("wheel", (e) => { e.preventDefault(); const [x, y] = local(e); zoomAt(s * Math.exp(-e.deltaY * 0.0015), x, y); }, { passive: false });
+    root.querySelector(".tg-home").addEventListener("click", () => { s = 1; ox = -2; oy = -2; draw(); });
+    view.addEventListener("wheel", (e) => {
+      e.preventDefault(); const [x, y] = local(e);
+      if (e.ctrlKey || Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.shiftKey) zoomAt(s * Math.exp(-e.deltaY * 0.0015), x, y);
+      else { ox += e.deltaX / (TG_CW * s); oy += e.deltaY / (TG_CH * s); draw(); }
+    }, { passive: false });
     const pts = new Map(); let start = null, moved = false, pinch = null;
     view.addEventListener("pointerdown", (e) => {
-      if (e.target.closest(".tg-edit, .tg-del")) return;
       view.setPointerCapture(e.pointerId); pts.set(e.pointerId, local(e));
-      if (pts.size === 1) { start = { p: local(e), tx, ty, target: e.target }; moved = false; }
-      if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), s, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }; moved = true; }
+      if (pts.size === 1) { start = { p: local(e), ox, oy }; moved = false; }
+      if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, s, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }; moved = true; }
     });
     view.addEventListener("pointermove", (e) => {
       if (!pts.has(e.pointerId)) return;
       pts.set(e.pointerId, local(e));
-      if (pts.size >= 2 && pinch) { const [a, b] = [...pts.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); zoomAt(pinch.s * d / pinch.d, pinch.m[0], pinch.m[1]); return; }
+      if (pts.size >= 2 && pinch) { const [a, b] = [...pts.values()]; zoomAt(pinch.s * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d, pinch.m[0], pinch.m[1]); return; }
       if (!start) return;
       const [x, y] = local(e), dx = x - start.p[0], dy = y - start.p[1];
       if (!moved && Math.hypot(dx, dy) < 5) return;
-      moved = true; view.classList.add("panning"); tx = start.tx + dx; ty = start.ty + dy; apply();
+      moved = true; view.classList.add("panning");
+      ox = start.ox - dx / (TG_CW * s); oy = start.oy - dy / (TG_CH * s); draw();
     });
     const up = (e) => {
       if (!pts.has(e.pointerId)) return;
@@ -3291,55 +3304,84 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       view.classList.remove("panning");
       const st = start; start = null;
       if (!st || moved || e.type === "pointercancel") return;
-      if (st.target.closest(".tg-note")) return;
-      if (editing) { finish(true); return; }
-      const [x, y] = local(e); write((x - tx) / s, (y - ty) / s);
+      const [x, y] = local(e);
+      cur = { x: Math.floor(ox + x / (TG_CW * s)), y: Math.floor(oy + y / (TG_CH * s)) }; lineStart = cur.x;
+      place(); inp.focus({ preventScroll: true }); blink = true; draw();
     };
     view.addEventListener("pointerup", up); view.addEventListener("pointercancel", up);
+    // the hidden box sits on the cursor so phone keyboards and accents work
+    const place = () => { if (!cur) return; const cw = TG_CW * s, ch = TG_CH * s; inp.style.left = Math.max(0, Math.min(view.clientWidth - 20, (cur.x - ox) * cw)) + "px"; inp.style.top = Math.max(0, Math.min(view.clientHeight - 20, (cur.y - oy) * ch)) + "px"; };
+    inp.addEventListener("focus", () => { focused = true; blink = true; draw(); });
+    inp.addEventListener("blur", () => { focused = false; draw(); });
 
-    // writing a note
-    function write(wx, wy) {
+    // typing
+    const pending = new Map();   // tile id -> { index: character }
+    let flushT = 0, budget = 40, budgetT = Date.now();
+    function put(x, y, c) {
+      const now = Date.now(); budget = Math.min(40, budget + (now - budgetT) / 50); budgetT = now;
+      if (budget < 1) { say("Slow down a little."); return false; }
+      budget -= 1;
+      const tx = Math.floor(x / TG_TW), ty = Math.floor(y / TG_TH), i = (y - ty * TG_TH) * TG_TW + (x - tx * TG_TW);
+      mine.set(key(x, y), c);
+      const id = tx + "_" + ty; if (!pending.has(id)) pending.set(id, {}); pending.get(id)[i] = c;
+      clearTimeout(flushT); flushT = setTimeout(flush, 350);
+      return true;
+    }
+    async function flush() {
       if (!db || !meId) { say("Writing isn't available right now."); return; }
-      const t = el("textarea", "tg-edit"); t.maxLength = 300; t.spellcheck = false; t.style.color = color;
-      t.style.left = Math.min(TAG_W - 230, Math.max(0, wx)) + "px"; t.style.top = Math.min(TAG_H - 70, Math.max(0, wy - 10)) + "px";
-      t.placeholder = "write here, Enter to post";
-      t.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); finish(true); } else if (e.key === "Escape") finish(false); });
-      t.addEventListener("blur", () => setTimeout(() => { if (editing === t) finish(true); }, 120));
-      world.append(t); editing = t; t.focus(); setTimeout(() => { if (editing === t && document.activeElement !== t) t.focus(); }, 20);
-    }
-    async function finish(keep) {
-      const t = editing; if (!t) return; editing = null;
-      const text = t.value.replace(/\s+$/, "").slice(0, 300); t.remove();
-      if (!keep || !text.trim()) return;
-      if (Date.now() - tagLast < 4000) { say("Wait a moment before writing again."); return; }
-      tagLast = Date.now();
-      try { await db.collection("tags").doc(uid()).set({ x: Math.round(parseFloat(t.style.left)), y: Math.round(parseFloat(t.style.top)), text, nick: myNick || "anon", uid: meId, color: t.style.color && TAG_COLORS.includes(color) ? color : TAG_COLORS[0], createdAt: Date.now() }); }
-      catch (_) { say("Couldn't post the note."); }
-    }
-
-    // the notes, live
-    function render(list) {
-      [...world.querySelectorAll(".tg-note")].forEach((n) => n.remove());
-      list.forEach((n) => {
-        const d = el("div", "tg-note"); d.style.left = (n.x || 0) + "px"; d.style.top = (n.y || 0) + "px"; d.style.color = TAG_COLORS.includes(n.color) ? n.color : TAG_COLORS[0];
-        d.append(document.createTextNode(n.text || ""), el("span", "tg-by", "— " + (n.nick || "anon")));
-        if (n.uid === meId || isOwnerView) {
-          const x = el("button", "tg-del", "x"); x.type = "button"; x.title = "Remove this note";
-          x.addEventListener("click", async (e) => { e.stopPropagation(); try { await db.doc("tags/" + n.id).delete(); } catch (_) { say("Couldn't remove it."); } });
-          d.append(x);
+      const batch = [...pending]; pending.clear();
+      for (const [id, ch] of batch) {
+        const upd = {}; for (const i in ch) upd["c." + i] = ch[i];
+        try { await db.doc("tags/" + id).update(upd); }
+        catch (e) {
+          if (e && (e.code === "not-found" || /not.found|No document/i.test(e.message || ""))) {
+            try { await db.doc("tags/" + id).set({ c: ch }); } catch (_) { say("Couldn't write that."); }
+          } else say("Couldn't write that.");
         }
-        world.append(d);
-      });
-      if (!centred) {
-        centred = true;
-        const last = list[list.length - 1];
-        if (last) centreOn((last.x || 0) + 100, (last.y || 0) + 20); else centreOn(TAG_W / 2, TAG_H / 2);
       }
     }
-    s = Math.max(minS(), 0.8); centreOn(TAG_W / 2, TAG_H / 2);
-    new ResizeObserver(() => apply()).observe(view);
-    if (!db) { say("The board isn't available right now."); return; }
-    tagUnsub = db.collection("tags").orderBy("createdAt", "asc").onSnapshot((sn) => render(sn.docs.map((d) => ({ id: d.id, ...d.data() }))), () => say("Couldn't load the board."));
+    function type(text) {
+      if (!cur) return;
+      for (const c of text) {
+        if (c === "\n" || c === "\r") { cur = { x: lineStart, y: cur.y + 1 }; continue; }
+        if (c < " ") continue;
+        if (!put(cur.x, cur.y, c)) break;
+        cur = { x: cur.x + 1, y: cur.y };
+      }
+      keepInView(); place(); blink = true; draw();
+    }
+    function keepInView() {
+      if (!cur) return;
+      const vw = view.clientWidth / (TG_CW * s), vh = view.clientHeight / (TG_CH * s);
+      if (cur.x < ox) ox = cur.x - 1; if (cur.x > ox + vw - 2) ox = cur.x - vw + 2;
+      if (cur.y < oy) oy = cur.y - 1; if (cur.y > oy + vh - 2) oy = cur.y - vh + 2;
+    }
+    inp.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (!cur || e.isComposing) return;
+      const mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+      if (mv) { e.preventDefault(); cur = { x: cur.x + mv[0], y: cur.y + mv[1] }; if (mv[1]) lineStart = cur.x; keepInView(); place(); blink = true; draw(); return; }
+      if (e.key === "Backspace") { e.preventDefault(); cur = { x: cur.x - 1, y: cur.y }; put(cur.x, cur.y, " "); keepInView(); place(); draw(); return; }
+      if (e.key === "Enter") { e.preventDefault(); type("\n"); return; }
+      if (e.key === "Escape") { inp.blur(); return; }
+    });
+    inp.addEventListener("input", () => { const t = inp.value; inp.value = ""; if (t) type(t); });
+
+    new ResizeObserver(() => draw()).observe(view);
+    draw();
+    if (db) tagUnsub = db.collection("tags").onSnapshot((sn) => {
+      cells.clear();
+      sn.docs.forEach((d) => {
+        const m = /^(-?\d+)_(-?\d+)$/.exec(d.id); if (!m) return;
+        const tx = +m[1], ty = +m[2], c = (d.data() || {}).c || {};
+        for (const i in c) { const n = +i; if (!(n >= 0 && n < TG_TW * TG_TH)) continue; const ch = String(c[i] || "").slice(0, 2); if (ch && ch !== " ") cells.set(key(tx * TG_TW + n % TG_TW, ty * TG_TH + Math.floor(n / TG_TW)), ch); }
+      });
+      // once the wall has what this visitor typed, stop holding it locally
+      for (const [k, c] of mine) if ((cells.get(k) || " ") === c && !pending.size) mine.delete(k);
+      draw();
+    }, () => say("Couldn't load the wall."));
+    else say("The wall isn't available right now.");
+    return { close() { clearInterval(blinkT); clearTimeout(flushT); if (pending.size) flush(); } };
   }
   function drawTagIcon(c) {
     // a little slate on legs, with chalk notes in white, yellow and pink
