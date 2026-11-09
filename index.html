@@ -192,6 +192,17 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .gx .chglist .empty { color: #555; font-family: inherit; }
 .gx .hexinfo { font-size: 10px; margin-top: 6px; line-height: 1.4; word-break: break-word; }
 .gx .hidden { display: none; }
+/* ascii.exe */
+.tx .row { margin: 6px 6px 0; }
+.tx .tx-emrow label { width: 78px; }
+.tx .tx-emrow input, .tx .tx-cusrow input { flex: 1; min-width: 0; font: 16px "Courier New", Courier, monospace; padding: 2px 4px; background: #fff; border: 2px solid; border-color: #808080 #fff #fff #808080; -webkit-user-select: text; user-select: text; }
+.tx .group .row { margin: 8px 0 0; }
+.tx .modes { grid-template-columns: 1fr 1fr 1fr; }
+.tx .tx-paper { width: 100%; background: #fff; color: #000; padding: 6px; border: 2px solid; border-color: #000 #fff #fff #000; overflow: hidden; display: flex; justify-content: center; }
+.tx .tx-paper.neg { background: #000; color: #fff; }
+.tx .tx-out { margin: 0; font-family: "Courier New", Courier, monospace; line-height: 1; letter-spacing: 0; white-space: pre; -webkit-user-select: text; user-select: text; }
+.tx label.tx-chk { width: auto; display: flex; align-items: center; gap: 4px; }
+.tx .tx-cusrow[hidden], .tx .tx-emrow[hidden] { display: none; }
 .what img { display: block; max-width: 100%; margin: 6px auto; image-rendering: pixelated; border: 1px solid #000; }
 .what .wblock { border-bottom: 1px dotted var(--lo); padding: 4px 0; }
 .what .wtext { width: 100%; box-sizing: border-box; font: 12px var(--serif); border: 2px solid; border-color: #808080 #fff #fff #808080; padding: 3px; resize: vertical; -webkit-user-select: text; user-select: text; }
@@ -395,7 +406,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pixfont" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 1"/></feComponentTransfer></filter><filter id="pixfont-soft" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 0.45 0.8 1"/></feComponentTransfer></filter></svg>
 <div id="screen"><div id="raster">
 <canvas id="wall" aria-hidden="true"></canvas>
-<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button></div>
+<div id="desk"><div class="seltools bevel" id="selTools" hidden></div><button class="dicon" id="galleryIcon" type="button" hidden style="left:12px;top:12px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">gallery.exe</span></button><button class="dicon" id="scatterIcon" type="button" hidden style="left:12px;top:84px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">shuffle.exe</span></button><button class="dicon" id="arrangeIcon" type="button" hidden style="left:12px;top:156px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">arrange.exe</span></button><button class="dicon" id="legendIcon" type="button" hidden style="left:12px;top:228px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">key.exe</span></button><button class="dicon" id="trashIcon" type="button" hidden style="left:12px;top:300px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">bin</span></button><button class="dicon" id="favIcon" type="button" hidden style="left:12px;top:372px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">favs!.exe</span></button><button class="dicon" id="capIcon" type="button" hidden style="left:12px;top:444px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">capture.exe</span></button><button class="dicon" id="glitchIcon" type="button" hidden style="left:12px;top:516px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">glitch.exe</span></button><button class="dicon" id="shareIcon" type="button" hidden style="left:12px;top:588px"><canvas class="ico" width="40" height="40"></canvas><span class="lbl">share.exe</span></button><button class="dicon" id="whatIcon" type="button" hidden style="left:12px;top:660px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">what?.exe</span></button><button class="dicon" id="asciiIcon" type="button" hidden style="left:12px;top:732px"><canvas class="ico" width="16" height="16"></canvas><span class="lbl">ascii.exe</span></button></div>
 <footer id="bar" class="bevel">
   <div class="grp" id="grp" hidden><button class="b bevel" id="grpBtn" type="button" aria-haspopup="true"><canvas width="16" height="16"></canvas><span id="grpLbl">photos</span></button><div class="grp-list bevel" id="grpList"><div class="head">Open photos</div></div></div>
   <div class="tasks" id="tasks"></div>
@@ -524,7 +535,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   function btn(cls, text, fn) { const b = el("button", cls, text); b.type = "button"; b.addEventListener("click", fn); return b; }
 
   /* ---------- window manager ---------- */
-  const every = () => [...wins.values(), readme, index, loader, legend, binWin, favWin, peopleWin, capWin, glitchWin, hexWin, bitsWin, pixWin, shareWin, whatWin].filter(Boolean);
+  const every = () => [...wins.values(), readme, index, loader, legend, binWin, favWin, peopleWin, capWin, glitchWin, hexWin, bitsWin, pixWin, shareWin, whatWin, asciiWin].filter(Boolean);
   function focusWin(w) {
     w.el.classList.remove("hidden");
     w.el.style.zIndex = ++z;
@@ -1153,6 +1164,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       ["favs!", "your starred photos"],
       ["capture", "picture of the desktop"],
       ["glitch", "corrupt, dither, shuffle a photo"],
+      ["ascii", "a photo or emoji in letters"],
       ["share", "pictures everyone posted"],
       ["what?", "what this site is"]
     ]);
@@ -2964,6 +2976,254 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   });
   wireIcon(cIcon, openCapture);
 
+  /* ---------- ascii.exe: a photo, a file or an emoji redrawn with letters and symbols ---------- */
+  let asciiWin = null;
+  // each set runs from empty paper to the darkest mark
+  const TX_SETS = [
+    ["classic", "Classic", " .:-=+*#%@"],
+    ["blocks", "Blocks", " ░▒▓█"],
+    ["dots", "Dots", " ·.:•oO●"],
+    ["letters", "Letters", " .,ilcoaxkdbqXWM"],
+    ["binary", "0 and 1", " .01"],
+    ["lines", "Lines", ""],
+    ["custom", "My own", ""]
+  ];
+  const TX_EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Segoe UI Symbol",sans-serif';
+  function openAscii() {
+    if (asciiWin) { focusWin(asciiWin); return; }
+    const W = desk.clientWidth, H = desk.clientHeight;
+    const ww = Math.min(360, W - 16), hh = Math.min(640, H - 16);
+    asciiWin = makeWin("ascii.exe", { x: Math.max(8, Math.round((W - ww) / 2 + 120)), y: Math.max(8, Math.round((H - hh) / 2)), w: ww, h: hh }, { closable: true, onClose: () => { asciiWin = null; } });
+    const root = el("div", "gx tx"); asciiWin.body.append(root);
+    try { initAscii(root); } catch (_) { root.textContent = "ascii.exe couldn't start."; }
+  }
+  function initAscii(root) {
+    const P = { cols: 32, set: "classic", custom: " -+#", contrast: 100, bright: 0, edge: 45, dither: false, neg: false };
+    let srcCanvas = null, srcName = "emoji", text = "", grid = null;
+    const q = (s) => root.querySelector(s);
+    root.innerHTML =
+      '<div class="toolbar"><select class="tx-src" title="What to draw"></select>' +
+      '<label class="filebtn" title="Use a picture from your computer">Open...<input type="file" accept="image/*" class="tx-file"></label>' +
+      '<button type="button" class="tx-copy" title="Copy the text">Copy</button><button type="button" class="tx-txt" title="Save as a text file">.txt</button>' +
+      '<button type="button" class="tx-png" title="Save as a picture">PNG</button><button type="button" class="tx-desk" title="Put this picture on your desktop">+ Desktop</button>' +
+      '<button type="button" class="tx-share" title="Post this picture in share.exe">+ Share</button></div>' +
+      '<div class="row tx-emrow"><label>Emoji / text</label><input type="text" class="tx-emoji" maxlength="8" spellcheck="false"></div>' +
+      '<div class="viewer"><div class="tx-paper"><pre class="tx-out"></pre></div><div class="caption tx-cap">&nbsp;</div></div>' +
+      '<div class="group"><span class="lg">Characters</span><div class="modes tx-sets"></div>' +
+      '<div class="row tx-cusrow"><label>Mine</label><input type="text" class="tx-custom" maxlength="24" spellcheck="false"></div>' +
+      '<div class="note tx-setnote"></div></div>' +
+      '<div class="group"><span class="lg">Controls</span><div class="tx-ctl"></div></div><div style="height:8px"></div>';
+    const sel = q(".tx-src"), out = q(".tx-out"), cap = q(".tx-cap"), emIn = q(".tx-emoji"), paper = q(".tx-paper");
+    // sources: an emoji or a few letters typed in, then the gallery (starred first)
+    const list = photos.map((p) => ({ name: nameOf(p), url: srcOf(p), fav: favIds.has(p.id) })).sort((a, b) => b.fav - a.fav);
+    const o0 = el("option", "", "☺ emoji or text"); o0.value = "emoji"; sel.append(o0);
+    list.forEach((p, i) => { const o = el("option", "", p.name); o.value = String(i); if (p.fav) o.dataset.fav = "1"; sel.append(o); });
+    emIn.value = "🙂";
+    // the sets as buttons
+    const setsBox = q(".tx-sets");
+    TX_SETS.forEach(([k, label]) => {
+      const b = el("button", k === P.set ? "on" : "", label); b.type = "button"; b.dataset.set = k;
+      b.addEventListener("click", () => { P.set = k; setsBox.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); buildControls(); render(); });
+      setsBox.append(b);
+    });
+    q(".tx-custom").value = P.custom;
+    q(".tx-custom").addEventListener("input", (e) => { P.custom = e.target.value; render(); });
+    // sliders and switches
+    const ctl = q(".tx-ctl");
+    function slider(label, min, max, key, fmt) {
+      const r = el("div", "row"), l = el("label", "", label), i = el("input"), v = el("span", "val");
+      i.type = "range"; i.min = min; i.max = max; i.value = P[key];
+      const show = () => { v.textContent = fmt ? fmt(P[key]) : P[key]; };
+      i.addEventListener("input", () => { P[key] = +i.value; show(); render(); });
+      show(); r.append(l, i, v); ctl.append(r);
+    }
+    function check(label, key) {
+      const r = el("div", "row"), l = el("label", "tx-chk"), i = el("input");
+      i.type = "checkbox"; i.checked = P[key];
+      i.addEventListener("change", () => { P[key] = i.checked; render(); });
+      l.append(i, document.createTextNode(" " + label)); r.append(l); ctl.append(r);
+    }
+    function buildControls() {
+      ctl.replaceChildren();
+      slider("Width", 8, 100, "cols", (v) => v + " ch");
+      slider("Contrast", 20, 300, "contrast", (v) => v + "%");
+      slider("Brightness", -100, 100, "bright");
+      if (P.set === "lines") slider("Edges", 1, 100, "edge");
+      else check("Dither (mix the marks)", "dither");
+      check("White on black", "neg");
+      q(".tx-cusrow").hidden = P.set !== "custom";
+      q(".tx-setnote").textContent = P.set === "lines" ? "Draws the outlines with - | / \\ only." : P.set === "custom" ? "Type your characters from lightest to darkest." : "";
+    }
+    buildControls();
+
+    // the picture to read: an emoji/text drawn big and cropped, or an image scaled down
+    function emojiCanvas(t) {
+      const fs = 120, c = document.createElement("canvas"), g = c.getContext("2d");
+      g.font = fs + "px " + TX_EMOJI_FONT;
+      const w = Math.max(fs, Math.ceil(g.measureText(t).width) + 40);
+      c.width = w; c.height = fs * 1.6;
+      g.font = fs + "px " + TX_EMOJI_FONT; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#000";
+      g.fillText(t, w / 2, c.height / 2);
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+      for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 16) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) return null;
+      const m = 6, out = document.createElement("canvas");
+      out.width = x1 - x0 + 1 + m * 2; out.height = y1 - y0 + 1 + m * 2;
+      out.getContext("2d").drawImage(c, x0 - m, y0 - m, out.width, out.height, 0, 0, out.width, out.height);
+      return out;
+    }
+    function imageCanvas(img) {
+      const k = Math.min(1, 480 / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round((img.naturalWidth || img.width) * k)); c.height = Math.max(1, Math.round((img.naturalHeight || img.height) * k));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      return c;
+    }
+    function loadUrl(url, name) {
+      const img = new Image();
+      img.onload = () => { srcCanvas = imageCanvas(img); srcName = name; render(); };
+      img.onerror = () => { cap.textContent = "Couldn't read that picture."; };
+      img.src = url;
+    }
+    function useSource() {
+      const v = sel.value;
+      q(".tx-emrow").hidden = v !== "emoji";
+      if (v === "emoji") { srcCanvas = emojiCanvas(emIn.value.trim()); srcName = "emoji"; render(); return; }
+      const p = list[+v]; if (p) loadUrl(p.url, p.name.replace(/\.[^.]+$/, ""));
+    }
+    sel.addEventListener("change", useSource);
+    emIn.addEventListener("input", () => { if (sel.value === "emoji") useSource(); });
+    q(".tx-file").addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => { q(".tx-emrow").hidden = true; loadUrl(r.result, f.name.replace(/\.[^.]+$/, "")); };
+      r.readAsDataURL(f); e.target.value = "";
+    });
+
+    // brightness per character cell: 0 = paper, 1 = darkest
+    function readGrid() {
+      const sw = srcCanvas.width, sh = srcCanvas.height, cols = P.cols;
+      const rows = Math.max(1, Math.round(cols * (sh / sw) * 0.55));
+      const K = 4, c = document.createElement("canvas"); c.width = cols * K; c.height = rows * K;
+      const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+      g.imageSmoothingQuality = "high"; g.drawImage(srcCanvas, 0, 0, c.width, c.height);
+      const d = g.getImageData(0, 0, c.width, c.height).data, v = new Float32Array(cols * rows);
+      const ct = P.contrast / 100, br = P.bright / 200;
+      for (let r = 0; r < rows; r++) for (let cc = 0; cc < cols; cc++) {
+        let s = 0;
+        for (let y = 0; y < K; y++) for (let x = 0; x < K; x++) { const i = ((r * K + y) * c.width + cc * K + x) * 4; s += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; }
+        let l = s / (K * K * 255);
+        l = (l - 0.5) * ct + 0.5 + br;
+        v[r * cols + cc] = Math.min(1, Math.max(0, 1 - l));
+      }
+      return { v, cols, rows };
+    }
+    function toText({ v, cols, rows }) {
+      const lines = [];
+      if (P.set === "lines") {
+        const raw = (x, y) => v[Math.min(rows - 1, Math.max(0, y)) * cols + Math.min(cols - 1, Math.max(0, x))];
+        // soften first, so fine texture doesn't turn into scribbles
+        const soft = new Float32Array(cols * rows);
+        for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) { let t = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) t += raw(x + dx, y + dy) * (dx || dy ? 1 : 4); soft[y * cols + x] = t / 12; }
+        const at = (x, y) => soft[Math.min(rows - 1, Math.max(0, y)) * cols + Math.min(cols - 1, Math.max(0, x))];
+        const th = (101 - P.edge) / 100 * 1.2;
+        for (let y = 0; y < rows; y++) {
+          let s = "";
+          for (let x = 0; x < cols; x++) {
+            const gx = at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1);
+            const gy = at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1);
+            if (Math.hypot(gx, gy) < th) { s += " "; continue; }
+            // the outline runs across the gradient
+            let a = Math.atan2(gy, gx * 0.55) + Math.PI / 2; a = ((a % Math.PI) + Math.PI) % Math.PI;
+            const k = Math.round(a / (Math.PI / 4)) % 4;
+            s += ["-", "\\", "|", "/"][k];
+          }
+          lines.push(s.replace(/\s+$/, ""));
+        }
+        return lines.join("\n");
+      }
+      const set = P.set === "custom" ? ([...(P.custom || "")].length ? [...P.custom] : [" ", "#"]) : [...TX_SETS.find((s) => s[0] === P.set)[2]];
+      const n = set.length, w = v.slice();
+      for (let y = 0; y < rows; y++) {
+        let s = "";
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x, val = Math.min(1, Math.max(0, w[i]));
+          const k = n > 1 ? Math.round(val * (n - 1)) : 0;
+          if (P.dither && n > 1) {
+            const err = val - k / (n - 1);
+            if (x + 1 < cols) w[i + 1] += err * 7 / 16;
+            if (y + 1 < rows) { if (x > 0) w[i + cols - 1] += err * 3 / 16; w[i + cols] += err * 5 / 16; if (x + 1 < cols) w[i + cols + 1] += err / 16; }
+          }
+          s += set[k];
+        }
+        lines.push(s.replace(/\s+$/, ""));
+      }
+      return lines.join("\n");
+    }
+    function render() {
+      if (!srcCanvas) { text = ""; out.textContent = ""; cap.textContent = sel.value === "emoji" ? "Type an emoji or a few letters." : " "; return; }
+      // white on black reads the picture the other way round, so it still looks the same
+      const g0 = readGrid();
+      if (P.neg) for (let i = 0; i < g0.v.length; i++) g0.v[i] = 1 - g0.v[i];
+      grid = g0; text = toText(g0);
+      out.textContent = text;
+      paper.classList.toggle("neg", P.neg);
+      const avail = Math.max(60, paper.clientWidth - 12);
+      out.style.fontSize = Math.max(3, Math.min(16, avail / (g0.cols * 0.6))) + "px";
+      cap.textContent = g0.cols + " × " + g0.rows + " characters";
+    }
+    new ResizeObserver(() => { if (grid) render(); }).observe(paper);
+
+    // outputs
+    const baseName = () => srcName + "_ascii";
+    function toPng() {
+      const lines = text.split("\n"), cols = grid ? grid.cols : 1, cw = 6, chh = 10;
+      const c = document.createElement("canvas"); c.width = cols * cw + 8; c.height = lines.length * chh + 8;
+      const g = c.getContext("2d");
+      g.fillStyle = P.neg ? "#000" : "#fff"; g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = P.neg ? "#fff" : "#000"; g.font = "10px 'Courier New', Courier, monospace"; g.textBaseline = "top";
+      // one character per cell, so the grid holds even where a font is wider
+      lines.forEach((ln, y) => [...ln].forEach((ch, x) => { if (ch !== " ") g.fillText(ch, 4 + x * cw, 4 + y * chh); }));
+      return c;
+    }
+    async function save(blob, filename) {
+      const dl = window.claude && window.claude.use ? await window.claude.use("downloads").catch(() => null) : null;
+      if (!dl) { cap.textContent = "Saving isn't available here"; return; }
+      try { await dl.save({ filename, data: blob }); cap.textContent = "Saved " + filename; }
+      catch (e) { cap.textContent = e && e.code === "declined" ? "Not saved" : "Couldn't save the file"; }
+    }
+    q(".tx-copy").addEventListener("click", async () => {
+      if (!text) return;
+      try { await navigator.clipboard.writeText(text); cap.textContent = "Copied. Paste it with a monospaced font."; }
+      catch (_) { const t = el("textarea"); t.value = text; root.append(t); t.select(); try { document.execCommand("copy"); cap.textContent = "Copied."; } catch (__) { cap.textContent = "Couldn't copy."; } t.remove(); }
+    });
+    q(".tx-txt").addEventListener("click", () => { if (text) save(new Blob([text + "\n"], { type: "text/plain" }), baseName() + ".txt"); });
+    q(".tx-png").addEventListener("click", () => { if (text) toPng().toBlob((b) => save(b, baseName() + ".png"), "image/png"); });
+    q(".tx-desk").addEventListener("click", () => { if (text) addEdit(toPng().toDataURL("image/png"), baseName()); });
+    q(".tx-share").addEventListener("click", () => { if (text) shareImage(toPng().toDataURL("image/png"), baseName()); });
+
+    retroSelect(sel);
+    useSource();
+  }
+  function drawAsciiIcon(c) {
+    // a sheet of paper with a little face typed out of dots and marks
+    const g = c.getContext("2d"), R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+    g.clearRect(0, 0, 16, 16);
+    R(2, 0, 12, 16, "#000"); R(3, 1, 10, 14, "#fff"); R(11, 1, 2, 2, "#c0c0c0");
+    const rows = ["  .oo.  ", " o    o ", "o .  . o", "o  ..  o", " o .. o ", "  .oo.  "];
+    rows.forEach((s, y) => [...s].forEach((ch, x) => { if (ch === "o") R(4 + x, 3 + y * 2, 1, 1, "#000080"); else if (ch === ".") R(4 + x, 3 + y * 2, 1, 1, "#808080"); }));
+    R(5, 14, 6, 1, "#660000");
+  }
+  const txIcon = $("asciiIcon");
+  drawAsciiIcon(txIcon.querySelector(".ico"));
+  wireIcon(txIcon, () => {
+    if (asciiWin) { focusWin(asciiWin); return; }
+    runLoader("ascii", "ascii.exe", drawAsciiIcon, [
+      [25, "Starting ascii.exe..."], [60, "Loading characters..."],
+      [90, () => "Reading " + photos.length + " photos..."], [100, "Ready."]], openAscii);
+  });
+
   /* ---------- edited pictures (your own desktop) and share.exe (everyone's) ---------- */
   let myEdits = [], editsLocal = false, sharedItems = [], shareWin = null, isOwnerView = false;
   const EDITS_KEY = "casio-gallery-edits";
@@ -3539,7 +3799,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     $("editBtn").hidden = !canWrite;
     $("guestBtn").hidden = !canWrite || galleryMode;
     // every program stays on the desktop in both modes
-    [sIcon, gIcon, aIcon, lIcon, tIcon, fIcon, cIcon, gxIcon, shIcon, whIcon].forEach((ic) => { ic.hidden = false; });
+    [sIcon, gIcon, aIcon, lIcon, tIcon, fIcon, cIcon, gxIcon, shIcon, whIcon, txIcon].forEach((ic) => { ic.hidden = false; });
     loadIconSpots();
     updateSelTools();
     if (whatWin) { whatDraft = null; renderWhat(); }
