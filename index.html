@@ -227,6 +227,8 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .prog .field { width: 100%; font: 12px var(--sans); }
 .fulltext { display: none; flex: none; padding: 2px 4px 14px 2px; font: 11px var(--sans); overflow-wrap: anywhere; line-height: 1.3; }
 .fulltext .dim { color: #404040; }
+.fulltext .desc { white-space: pre-wrap; max-height: 260px; overflow: auto; -webkit-user-select: text; user-select: text; }
+.fulltext .desc.art { white-space: pre; font: 11px/1.15 "Courier New", Courier, monospace; overflow-wrap: normal; }
 .win.showtext .capline { display: none; }
 .win.showtext .fulltext { display: block; }
 .edit input[type="date"] { font: 11px var(--sans); }
@@ -376,6 +378,7 @@ html.booting #nickGate .gpanel > :not(.ganim), html.booting #nickGate .gfoot { v
 .empty { font-style: italic; }
 .edit { font: 11px var(--sans); }
 .edit input { font: 11px var(--sans); width: 100%; border: 0; padding: 3px; background: var(--paper); margin-top: 2px; }
+.edit textarea { display: block; font: 11px/1.15 "Courier New", Courier, monospace; width: 100%; height: 66px; border: 0; padding: 3px; background: var(--paper); margin-top: 2px; resize: vertical; white-space: pre; overflow: auto; -webkit-user-select: text; user-select: text; }
 
 /* bottom bar */
 #bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 99999; box-sizing: border-box; height: calc(var(--bar-h) + var(--safe-b));
@@ -923,8 +926,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     w.photo = p;
     w.setTitle(nameOf(p));
     if (w.parts.img.getAttribute("src") !== srcOf(p)) w.parts.img.src = srcOf(p);
-    w.parts.img.alt = p.title || nameOf(p);
-    w.parts.t.replaceChildren(document.createTextNode(p.title || nameOf(p)));
+    w.parts.img.alt = capOf(p);
+    w.parts.t.replaceChildren(document.createTextNode(capOf(p)));
     if (p.createdAt && Date.now() - p.createdAt < WEEK) { w.parts.t.append(" "); w.parts.t.append(el("span", "new", "NEW!")); }
     w.parts.d.textContent = fmtDate(p.fileDate || p.createdAt);
     { const on = favIds.has(p.id); w.parts.star.classList.toggle("on", on); w.parts.star.setAttribute("aria-pressed", on ? "true" : "false"); }
@@ -932,6 +935,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       w.metaWired = true;
       w.parts.t.style.cursor = "text"; w.parts.t.title = "Click to rename or describe";
       w.parts.t.addEventListener("click", () => editMeta(w.photo));
+    }
+    if (!canWrite && !w.reader && !p.isEdit && !p.isShared) {
+      // visitors open the whole description (long texts, ascii art) by clicking the caption
+      w.reader = true; w.parts.t.style.cursor = "pointer"; w.parts.t.title = "Click to read the description";
+      w.parts.t.addEventListener("click", () => fitText(w));
     }
     if (canWrite && !w.editor && !p.isEdit && !p.isShared) {
       // editing lives in a small strip: text + delete, opened from the caption
@@ -949,12 +957,16 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     if (!PHONE && g && !!g.bars !== !!w.bars) setBars(w, !!g.bars);
     return w;
   }
+  // the caption bar shows the first line of a description; the rest is read in the full text area
+  function capOf(p) { const l = String(p.title || "").split("\n").map((x) => x.trim()).find(Boolean); return l || nameOf(p); }
+  // several lines with runs of spaces or drawing marks: lay it out in a fixed-width face so the picture lines up
+  function isArt(t) { return /\n/.test(t) && (/ {2,}/.test(t) || /[|\\/_#@*=<>()[\]{}~^-]{3,}/.test(t)); }
   function fitText(w) {
     // toggle a taller caption area that shows the whole name, caption and date; the photo area keeps its size
     const p = w.photo, f = w.parts.full;
     if (w.extraH) { w.geom.h -= w.extraH; w.extraH = 0; w.el.classList.remove("showtext"); w.apply(); return; }
     f.replaceChildren(el("b", "", nameOf(p)));
-    if (p.title) f.append(el("div", "", p.title));
+    if (p.title) f.append(el("div", "desc" + (isArt(p.title) ? " art" : ""), p.title));
     f.append(el("div", "dim", fmtDate(p.fileDate || p.createdAt)));
     const before = w.parts.t.parentElement.offsetHeight;
     w.el.classList.add("showtext");
@@ -985,27 +997,33 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const p = w.photo; if (!p || w.body.querySelector(".edit")) return;
     const box = el("div", "edit");
     const nm = el("input"); nm.type = "text"; nm.id = "n-" + p.id; nm.maxLength = 60; nm.value = nameOf(p); nm.placeholder = "file name"; nm.setAttribute("aria-label", "Photo name");
-    const inp = el("input"); inp.type = "text"; inp.id = "t-" + p.id; inp.maxLength = 80; inp.value = p.title || ""; inp.placeholder = "photo caption"; inp.setAttribute("aria-label", "Photo caption");
+    const inp = el("textarea"); inp.id = "t-" + p.id; inp.maxLength = 20000; inp.rows = 4; inp.wrap = "off"; inp.spellcheck = false; inp.value = p.title || "";
+    inp.placeholder = "description: any length, spaces and line breaks are kept (Ctrl+Enter saves)"; inp.setAttribute("aria-label", "Photo description");
     const dt = el("input"); dt.type = "date"; dt.id = "d-" + p.id; dt.setAttribute("aria-label", "Photo date");
     { const ms = p.fileDate || p.createdAt; if (ms) { const d0 = new Date(ms), z2 = (n) => String(n).padStart(2, "0"); dt.value = d0.getFullYear() + "-" + z2(d0.getMonth() + 1) + "-" + z2(d0.getDate()); } }
     const row = el("div", "capline");
     const ok = btn("lnk", "save", async () => {
       // the name keeps whatever extension is typed; with none, the old one stays
       const raw = nm.value.trim() || nameOf(p), m = raw.match(/^(.*?)(\.[A-Za-z0-9]{1,5})?$/);
-      const upd = { title: inp.value.trim(), fileName: m[1] || raw, ext: m[2] !== undefined ? m[2] : "" };
+      // keep the description's spaces and line breaks, only drop empty lines at the ends
+      const upd = { title: inp.value.replace(/\r\n?/g, "\n").replace(/^\s*\n/, "").replace(/\s+$/, ""), fileName: m[1] || raw, ext: m[2] !== undefined ? m[2] : "" };
       if (dt.value) { const [Y, M, D] = dt.value.split("-").map(Number); upd.fileDate = new Date(Y, M - 1, D, 12).getTime(); }
       if (m[2] === undefined) upd.ext = "";
+      // leave the box first: a window whose description box has focus isn't refreshed by the live update
+      if (box.contains(document.activeElement)) document.activeElement.blur();
       try { await db.collection("photos").doc(p.id).update(upd); } catch (_) { setStatus("Couldn't save the changes.", true); }
       box.remove();
+      const np = photos.find((q) => q.id === p.id); if (np) syncPhotoWin(np, photos.indexOf(np));
     });
     const del = btn("lnk", "delete photo", () => {
       row.replaceChildren(el("span", "", "sure?"), btn("lnk", "yes", () => removePhoto(p)), btn("lnk", "no", () => box.remove()));
     });
-    for (const f of [nm, inp, dt]) f.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") box.remove(); });
+    for (const f of [nm, dt]) f.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") box.remove(); });
+    inp.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ok.click(); } if (e.key === "Escape") box.remove(); });
     row.append(ok, del);
     box.append(nm, inp, dt, row);
     w.body.append(box);
-    w.geom.h = Math.max(w.geom.h, 182); w.apply();
+    w.geom.h = Math.max(w.geom.h, 236); w.geom.w = Math.max(w.geom.w, 200); w.apply();
     nm.focus(); nm.select();
   }
   const pending = new Map();
