@@ -35,11 +35,12 @@ service cloud.firestore {
       allow delete: if isMe(uid) || isOwner();
     }
 
-    // tag.exe: one shared wall of text, cut into tiles of 16 x 8 characters; anyone signed in types on it, the owner can wipe a tile
+    // tag.exe: one shared wall of text, cut into tiles of 16 x 8 characters (c: letters, k: colours); anyone signed in types on it, the owner can wipe a tile
     match /tags/{tile} {
       allow read: if true;
       allow create, update: if signedIn() && tile.matches('^-?[0-9]{1,5}_-?[0-9]{1,5}$')
-        && request.resource.data.keys().hasOnly(['c']) && request.resource.data.c is map && request.resource.data.c.size() <= 128;
+        && request.resource.data.keys().hasOnly(['c', 'k']) && request.resource.data.c is map && request.resource.data.c.size() <= 128
+        && (!('k' in request.resource.data) || (request.resource.data.k is map && request.resource.data.k.size() <= 128));
       allow delete: if isOwner();
     }
   }

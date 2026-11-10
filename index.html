@@ -205,6 +205,7 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .tx .toolbar button { flex-basis: 30%; }
 .tx .toolbar .tx-desk, .tx .toolbar .tx-share { flex-basis: 45%; }
 .tx .val { width: 46px; white-space: nowrap; }
+.tx .tx-about { margin: 6px 8px 0; font-size: 11px; line-height: 1.35; }
 /* tag.exe */
 .tg { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #c0c0c0; color: #000; font: 12px Tahoma, Geneva, Arial, sans-serif; }
 .tg-bar { display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-bottom: 1px solid #808080; flex-wrap: wrap; }
@@ -216,6 +217,9 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .tg-view.panning { cursor: grabbing; }
 .tg-view.selmode { cursor: cell; }
 .tg-bar button.on { border-color: #000 #fff #fff #000; background: #d4d0c8; }
+.tg-pal { display: flex; gap: 2px; flex-wrap: wrap; }
+.tg-bar .tg-sw { width: 14px; height: 14px; padding: 0; border-width: 1px; border-color: #808080 #fff #fff #808080; }
+.tg-bar .tg-sw.on { outline: 2px solid #000; outline-offset: 0; }
 .tg-cv { position: absolute; left: 0; top: 0; display: block; }
 .tg-in-txt { position: absolute; width: 20px; height: 20px; padding: 0; border: 0; opacity: 0; resize: none; font-size: 16px; color: transparent; background: transparent; caret-color: transparent; -webkit-user-select: text; user-select: text; }
 .what img { display: block; max-width: 100%; margin: 6px auto; image-rendering: pixelated; border: 1px solid #000; }
@@ -350,6 +354,8 @@ html.booting #nickGate .gpanel > :not(.ganim), html.booting #nickGate .gfoot { v
 .what .wkind { color: #555; }
 .what .whead .wctl { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
 .what .wimged { display: flex; }
+.what .wanimbox { display: flex; justify-content: center; margin: 8px 0; clear: both; }
+.what .wanim { image-rendering: pixelated; }
 .what .wimged.center { justify-content: center; } .what .wimged.right { justify-content: flex-end; }
 .what .wimged img { margin: 0; image-rendering: auto; border: 1px solid #888; }
 .what .wopts { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; margin: 4px 0 0; font: 11px var(--sans); }
@@ -3059,6 +3065,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       '<button type="button" class="tx-copy" title="Copy all the text">Copy all</button><button type="button" class="tx-txt" title="Save as a text file">.txt</button>' +
       '<button type="button" class="tx-png" title="Save as a picture">PNG</button><button type="button" class="tx-desk" title="Put this picture on your desktop">+ Desktop</button>' +
       '<button type="button" class="tx-share" title="Post this picture in share.exe">+ Share</button></div>' +
+      '<p class="tx-about">An ASCII art converter: it redraws a photo with letters and symbols, as text you can copy and paste anywhere.</p>' +
       '<div class="viewer"><div class="tx-paper"><pre class="tx-out"></pre></div><div class="caption tx-cap">&nbsp;</div></div>' +
       '<div class="group"><span class="lg">Characters</span><div class="modes tx-sets"></div>' +
       '<div class="row tx-cusrow"><label>Mine</label><input type="text" class="tx-custom" maxlength="24" spellcheck="false"></div>' +
@@ -3253,6 +3260,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   // the wall is cut into tiles of 16 x 8 characters; each tile is one record, tags/<tx>_<ty>, holding only the cells in use
   let tagWin = null, tagUnsub = null;
   const TG_TW = 16, TG_TH = 8, TG_CW = 10, TG_CH = 18;
+  // the gallery's own colours; a cell keeps the index of the one it was written in
+  const TG_PAL = ["#ffffff", "#ffffe1", "#ffe24a", "#ff6600", "#ff9fbf", "#c0c0c0", "#808080", "#660000", "#0000ff", "#000000"];
   function openTag() {
     if (tagWin) { focusWin(tagWin); return; }
     const W = desk.clientWidth, H = desk.clientHeight;
@@ -3266,12 +3275,14 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     root.innerHTML = '<div class="tg-bar"><button type="button" class="tg-out" title="Zoom out" aria-label="Zoom out">−</button><span class="tg-z">100%</span>' +
       '<button type="button" class="tg-in" title="Zoom in" aria-label="Zoom in">+</button><button type="button" class="tg-home" title="Back to the start of the wall">home</button>' +
       '<button type="button" class="tg-selb" title="Drag over the wall to select text (or hold Shift and drag)" aria-pressed="false">select</button><button type="button" class="tg-copy" title="Copy the selected text">copy</button>' +
+      '<button type="button" class="tg-era" title="Erase the selected text (or press Delete)">erase</button><span class="tg-pal" role="group" aria-label="Text colour"></span>' +
       '<span class="tg-hint">click anywhere and type or paste</span></div>' +
       '<div class="tg-view"><canvas class="tg-cv"></canvas><textarea class="tg-in-txt" autocapitalize="off" autocomplete="off" spellcheck="false" aria-label="Type on the wall"></textarea></div>';
     const view = root.querySelector(".tg-view"), cv = root.querySelector(".tg-cv"), inp = root.querySelector(".tg-in-txt");
     const zl = root.querySelector(".tg-z"), hint = root.querySelector(".tg-hint");
-    const cells = new Map();          // "x,y" -> character, from the wall
+    const cells = new Map();          // "x,y" -> [character, colour], from the wall
     const mine = new Map();           // what this visitor typed and hasn't been confirmed yet
+    let ink = 0;                      // the colour new text is written in
     let s = 1, ox = -2, oy = -2;      // zoom and the top-left corner of the view, in cells
     let cur = null, lineStart = 0, focused = false, blink = true, sel = null, selMode = false, selecting = false;
     const selBtn = root.querySelector(".tg-selb"), copyBtn = root.querySelector(".tg-copy");
@@ -3290,9 +3301,25 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     }
     selBtn.addEventListener("click", () => { selMode = !selMode; selBtn.classList.toggle("on", selMode); selBtn.setAttribute("aria-pressed", selMode ? "true" : "false"); view.classList.toggle("selmode", selMode); if (!selMode) { sel = null; draw(); } });
     copyBtn.addEventListener("click", copySel);
+    // walk the selected cells that hold something
+    function eachSelected(fn) { const r = selRect(); if (!r) return 0; let n = 0; for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) { const c = charAt(x, y); if (c && c !== " ") { fn(x, y, c); n++; } } return n; }
+    function eraseSel() { if (!sel) { say("Select some text first."); return; } const n = eachSelected((x, y) => put(x, y, " ", 0)); draw(); say(n ? "Erased." : "Nothing to erase there."); }
+    root.querySelector(".tg-era").addEventListener("click", eraseSel);
+    const pal = root.querySelector(".tg-pal");
+    TG_PAL.forEach((col, i) => {
+      const b = el("button", "tg-sw" + (i === 0 ? " on" : "")); b.type = "button"; b.style.background = col; b.title = "Write in this colour (with text selected, it colours the selection)"; b.setAttribute("aria-label", "colour " + col);
+      b.addEventListener("click", () => {
+        ink = i; pal.querySelectorAll(".tg-sw").forEach((x) => x.classList.toggle("on", x === b));
+        // with text selected, the colour goes on the selection too
+        if (sel) { eachSelected((x, y, c) => put(x, y, c, i)); draw(); }
+        if (cur) inp.focus({ preventScroll: true });
+      });
+      pal.append(b);
+    });
     const say = (t) => { hint.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => { hint.textContent = "click anywhere and type or paste"; }, 3500); };
     const key = (x, y) => x + "," + y;
-    const charAt = (x, y) => { const k = key(x, y); return mine.has(k) ? mine.get(k) : (cells.get(k) || ""); };
+    const cellAt = (x, y) => { const k = key(x, y); return mine.get(k) || cells.get(k) || null; };
+    const charAt = (x, y) => { const v = cellAt(x, y); return v ? v[0] : ""; };
 
     // drawing
     let raf = 0;
@@ -3310,9 +3337,10 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       if (cur && focused && blink && cur.x >= x0 && cur.x <= x1 && cur.y >= y0 && cur.y <= y1) { g.fillStyle = "#ffffe1"; g.fillRect((cur.x - ox) * cw, (cur.y - oy) * ch, cw, ch); }
       else if (cur) { g.strokeStyle = "#ffffe1"; g.lineWidth = 1; g.strokeRect((cur.x - ox) * cw + 0.5, (cur.y - oy) * ch + 0.5, cw - 1, ch - 1); }
       g.font = Math.max(2, Math.round(ch * 0.82)) + 'px "Times New Roman", Times, serif'; g.textBaseline = "middle"; g.textAlign = "center";
-      const paintCell = (x, y, c) => {
+      const paintCell = (x, y, v) => {
+        const c = v[0];
         if (x < x0 || x > x1 || y < y0 || y > y1 || !c || c === " ") return;
-        g.fillStyle = cur && focused && blink && cur.x === x && cur.y === y ? "#000080" : "#ffffff";
+        g.fillStyle = cur && focused && blink && cur.x === x && cur.y === y ? "#000080" : (TG_PAL[v[1]] || TG_PAL[0]);
         g.fillText(c, (x - ox + 0.5) * cw, (y - oy + 0.55) * ch);
       };
       for (const [k, c] of cells) { if (mine.has(k)) continue; const i = k.indexOf(","); paintCell(+k.slice(0, i), +k.slice(i + 1), c); }
@@ -3375,12 +3403,12 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     inp.addEventListener("blur", () => { focused = false; draw(); });
 
     // typing
-    const pending = new Map();   // tile id -> { index: character }
+    const pending = new Map();   // tile id -> { index: [character, colour] }
     let flushT = 0;
-    function put(x, y, c) {
+    function put(x, y, c, k = ink) {
       const tx = Math.floor(x / TG_TW), ty = Math.floor(y / TG_TH), i = (y - ty * TG_TH) * TG_TW + (x - tx * TG_TW);
-      mine.set(key(x, y), c);
-      const id = tx + "_" + ty; if (!pending.has(id)) pending.set(id, {}); pending.get(id)[i] = c;
+      mine.set(key(x, y), [c, k]);
+      const id = tx + "_" + ty; if (!pending.has(id)) pending.set(id, {}); pending.get(id)[i] = [c, k];
       clearTimeout(flushT); flushT = setTimeout(flush, 350);
       return true;
     }
@@ -3388,11 +3416,12 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       if (!db || !meId) { say("Writing isn't available right now."); return; }
       const batch = [...pending]; pending.clear();
       for (const [id, ch] of batch) {
-        const upd = {}; for (const i in ch) upd["c." + i] = ch[i];
+        const upd = {}; for (const i in ch) { upd["c." + i] = ch[i][0]; upd["k." + i] = ch[i][1]; }
         try { await db.doc("tags/" + id).update(upd); }
         catch (e) {
           if (e && (e.code === "not-found" || /not.found|No document/i.test(e.message || ""))) {
-            try { await db.doc("tags/" + id).set({ c: ch }); } catch (_) { say("Couldn't write that."); }
+            const c = {}, k = {}; for (const i in ch) { c[i] = ch[i][0]; k[i] = ch[i][1]; }
+            try { await db.doc("tags/" + id).set({ c, k }); } catch (_) { say("Couldn't write that."); }
           } else say("Couldn't write that.");
         }
       }
@@ -3421,10 +3450,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       e.stopPropagation();
       if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "C") && sel) { e.preventDefault(); copySel(); return; }
       if ((e.ctrlKey || e.metaKey) && (e.key === "a" || e.key === "A")) { e.preventDefault(); return; }
+      if ((e.key === "Backspace" || e.key === "Delete") && sel) { e.preventDefault(); eraseSel(); return; }
       if (!cur || e.isComposing) return;
       const mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
       if (mv) { e.preventDefault(); cur = { x: cur.x + mv[0], y: cur.y + mv[1] }; if (mv[1]) lineStart = cur.x; keepInView(); place(); blink = true; draw(); return; }
-      if (e.key === "Backspace") { e.preventDefault(); cur = { x: cur.x - 1, y: cur.y }; put(cur.x, cur.y, " "); keepInView(); place(); draw(); return; }
+      if (e.key === "Backspace") { e.preventDefault(); cur = { x: cur.x - 1, y: cur.y }; put(cur.x, cur.y, " ", 0); keepInView(); place(); draw(); return; }
       if (e.key === "Enter") { e.preventDefault(); type("\n"); return; }
       if (e.key === "Escape") { inp.blur(); return; }
     });
@@ -3436,11 +3466,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       cells.clear();
       sn.docs.forEach((d) => {
         const m = /^(-?\d+)_(-?\d+)$/.exec(d.id); if (!m) return;
-        const tx = +m[1], ty = +m[2], c = (d.data() || {}).c || {};
-        for (const i in c) { const n = +i; if (!(n >= 0 && n < TG_TW * TG_TH)) continue; const ch = String(c[i] || "").slice(0, 2); if (ch && ch !== " ") cells.set(key(tx * TG_TW + n % TG_TW, ty * TG_TH + Math.floor(n / TG_TW)), ch); }
+        const tx = +m[1], ty = +m[2], dd = d.data() || {}, c = dd.c || {}, kk = dd.k || {};
+        for (const i in c) { const n = +i; if (!(n >= 0 && n < TG_TW * TG_TH)) continue; const ch = String(c[i] || "").slice(0, 2); if (ch && ch !== " ") cells.set(key(tx * TG_TW + n % TG_TW, ty * TG_TH + Math.floor(n / TG_TW)), [ch, Math.min(TG_PAL.length - 1, Math.max(0, +kk[i] || 0))]); }
       });
       // once the wall has what this visitor typed, stop holding it locally
-      for (const [k, c] of mine) if ((cells.get(k) || " ") === c && !pending.size) mine.delete(k);
+      for (const [k, v] of mine) { const w = cells.get(k) || [" ", 0]; if (!pending.size && w[0] === v[0] && (v[0] === " " || w[1] === v[1])) mine.delete(k); }
       draw();
     }, () => say("Couldn't load the wall."));
     else say("The wall isn't available right now.");
@@ -3680,6 +3710,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     { type: "text", text: "Casio camera watch gallery" },
     { type: "text", text: "Photos taken with a Casio camera watch: 120x120 pixels, 16 shades of grey. Every photo is a window on this desktop. Drag them, stretch them, pile them up.\n\nOpen gallery.exe to see them all, glitch.exe to break one, and share.exe to see what other visitors made." }
   ];
+  // who?: the welcome animation in grey, with room for the owner's own words
+  const WHO_DEFAULT = [
+    { type: "text", text: "who?" },
+    { type: "anim" }
+  ];
   const CAM_DEFAULT = [
     { type: "text", text: "Casio WQV-1" },
     { type: "text", text: "~ Wrist Camera" },
@@ -3698,8 +3733,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   }
   let whatTab = "site", whatSel = -1, whatPreview = false;
   let camPhoto = null, camManual = null, manWin = null;
-  let aboutBlocks = null, camBlocks = null, whatWin = null, whatDraft = null;
-  const TABS = [["site", "the site!"], ["cam", "the camera!"]];
+  let aboutBlocks = null, camBlocks = null, whoBlocks = null, whatWin = null, whatDraft = null;
+  const TABS = [["site", "the site!"], ["cam", "the camera!"], ["who", "who?"]];
   const IMG_SIZES = [120, 180, 240, 360], IMG_POS = ["left", "center", "right"];
   function openWhat() {
     if (whatWin) { focusWin(whatWin); return; }
@@ -3712,6 +3747,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   }
   function savedBlocks(tab) {
     if (tab === "site") return aboutBlocks && aboutBlocks.length ? aboutBlocks : WHAT_DEFAULT;
+    if (tab === "who") return whoBlocks && whoBlocks.length ? whoBlocks : WHO_DEFAULT;
     if (camBlocks && camBlocks.length) return camBlocks;
     // before the camera tab was editable, its photo lived on its own
     const d = CAM_DEFAULT.slice();
@@ -3721,6 +3757,25 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   // photo width in screen pixels; older blocks stored a percentage
   const imgW = (b) => b.w || ({ 25: 120, 33: 120, 50: 180, 75: 240, 100: 360 }[b.size] || 240);
   const imgSrc = (b) => b.url || ("/_blob/" + b.assetId);
+  // the welcome animation drawn in shades of grey; plays while the canvas is on screen
+  function greyAnim(play) {
+    const c = el("canvas", "wanim"); c.width = WELCOME_ANIM.W; c.height = WELCOME_ANIM.H;
+    const dpr = window.devicePixelRatio || 1, dot = Math.max(1, Math.round(3 * dpr)) / dpr;
+    c.style.width = WELCOME_ANIM.W * dot + "px"; c.style.height = WELCOME_ANIM.H * dot + "px";
+    c.setAttribute("role", "img"); c.setAttribute("aria-label", "A person photographing a flower with a camera watch and sending it to a computer");
+    const g = c.getContext("2d");
+    const frame = (f) => {
+      WELCOME_ANIM.draw(g, f);
+      const id = g.getImageData(0, 0, c.width, c.height), d = id.data;
+      for (let i = 0; i < d.length; i += 4) { const l = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]); d[i] = d[i + 1] = d[i + 2] = l; }
+      g.putImageData(id, 0, 0);
+    };
+    const still = !play || (matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (still) { frame(36); return c; }
+    let f = 0; frame(0);
+    const t = setInterval(() => { if (!c.isConnected) { if (c._seen) clearInterval(t); return; } c._seen = true; f = (f + 1) % WELCOME_ANIM.frames; frame(f); }, 1000 / WELCOME_ANIM.fps);
+    return c;
+  }
   // the finished page: headings, text, pictures placed by size and side, link buttons
   function viewBlocks(blocks, ink, wrap) {
     const firstText = blocks.findIndex((b) => b.type === "text");
@@ -3742,6 +3797,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
         row.append(fig); return;
       }
       row = null;
+      if (b.type === "anim") { const box = el("div", "wanimbox"); box.append(greyAnim(true)); ink.append(box); return; }
       if (b.type === "links") {
         const box = el("div", "links");
         (b.text || "").split("\n").map((l) => l.trim()).filter(Boolean).forEach((line) => {
@@ -3781,7 +3837,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     // reading (or previewing a draft)
     if (!whatDraft || whatPreview) {
       if (owner && !whatDraft) t.append(btn("b bevel", "Edit", () => {
-        whatDraft = { site: JSON.parse(JSON.stringify(savedBlocks("site"))), cam: JSON.parse(JSON.stringify(savedBlocks("cam"))) };
+        whatDraft = { site: JSON.parse(JSON.stringify(savedBlocks("site"))), cam: JSON.parse(JSON.stringify(savedBlocks("cam"))), who: JSON.parse(JSON.stringify(savedBlocks("who"))) };
         whatSel = -1; renderWhat();
       }));
       if (whatDraft) { t.append(btn("b bevel", "Back to editing", () => { whatPreview = false; renderWhat(); }), btn("b bevel", "Save", saveWhat)); whatWin.status = el("span", "info", ""); t.append(whatWin.status); }
@@ -3800,27 +3856,31 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       btn("b bevel", "+ Text", () => add({ type: "text", text: "" })),
       btn("b bevel", "+ Photos", () => $("whatFile").click()),
       btn("b bevel", "+ Links", () => add({ type: "links", text: "label | https://" })),
+      btn("b bevel", "+ Animation", () => add({ type: "anim" })),
       btn("b bevel", camManual ? "Manual PDF ✓" : "+ Manual PDF", () => $("manFile").click()),
       btn("b bevel", "Preview", () => { whatPreview = true; renderWhat(); }),
       btn("b bevel", "Save", saveWhat),
       btn("b bevel", "Cancel", () => { whatDraft = null; whatSel = -1; renderWhat(); }), status);
     pg.append(el("p", "whint", "Click a block to pick it: new blocks go below it. Drag ≡ to move. Text: “# ” heading, “~ ” small grey line, [words](https://…) link. Links: one per line, label | address (“manual” alone opens the PDF)."));
-    const other = TABS.find(([k]) => k !== whatTab);
+    const others = TABS.filter(([k]) => k !== whatTab);
     list.forEach((b, i) => {
       const row = el("div", "wblock" + (i === whatSel ? " sel" : "")); row.dataset.i = i;
       row.addEventListener("pointerdown", (e) => { if (whatSel !== i && !e.target.closest("button,textarea,input")) { whatSel = i; pg.querySelectorAll(".wblock.sel").forEach((r) => r.classList.remove("sel")); row.classList.add("sel"); } });
       row.addEventListener("focusin", () => { whatSel = i; pg.querySelectorAll(".wblock.sel").forEach((r) => r.classList.remove("sel")); row.classList.add("sel"); });
       const head = el("div", "whead");
       const grip = el("span", "wgrip", "≡"); grip.title = "Drag to move"; grip.setAttribute("aria-hidden", "true");
-      head.append(grip, el("span", "wkind", b.type === "img" ? "photo" : b.type === "links" ? "links" : "text"));
+      head.append(grip, el("span", "wkind", b.type === "img" ? "photo" : b.type === "links" ? "links" : b.type === "anim" ? "animation" : "text"));
       const ctl = el("span", "wctl");
       ctl.append(
         btn("lnk", "up", () => { if (i) { [list[i - 1], list[i]] = [list[i], list[i - 1]]; whatSel = i - 1; renderWhat(); } }),
         btn("lnk", "down", () => { if (i < list.length - 1) { [list[i + 1], list[i]] = [list[i], list[i + 1]]; whatSel = i + 1; renderWhat(); } }),
-        btn("lnk", "to " + other[1], () => { whatDraft[other[0]].push(list.splice(i, 1)[0]); whatSel = -1; renderWhat(); }),
+        ...others.map(([ok, olabel]) => btn("lnk", "to " + olabel, () => { whatDraft[ok].push(list.splice(i, 1)[0]); whatSel = -1; renderWhat(); })),
         btn("lnk", "remove", () => { list.splice(i, 1); whatSel = Math.min(whatSel, list.length - 1); renderWhat(); }));
       head.append(ctl); row.append(head);
-      if (b.type === "img") {
+      if (b.type === "anim") {
+        const box = el("div", "wanimbox"); box.append(greyAnim(false)); row.append(box);
+        row.append(el("div", "wnote", "the welcome animation, in grey"));
+      } else if (b.type === "img") {
         const fig = el("div", "wimged " + (b.pos || "center")); const im = el("img"); im.src = imgSrc(b); im.alt = ""; im.style.width = imgW(b) + "px";
         fig.append(im); row.append(fig);
         const opts = el("div", "wopts");
@@ -3869,12 +3929,12 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   const assetIdsOf = (lists) => lists.flat().filter((b) => b && b.type === "img" && b.assetId).map((b) => b.assetId);
   async function saveWhat() {
     if (!db || !whatDraft) return;
-    const before = assetIdsOf([savedBlocks("site"), savedBlocks("cam")]);
-    const clean = (l) => l.filter((b) => b.type === "img" || (b.text || "").trim());
-    const site = clean(whatDraft.site), cam = clean(whatDraft.cam);
+    const before = assetIdsOf([savedBlocks("site"), savedBlocks("cam"), savedBlocks("who")]);
+    const clean = (l) => l.filter((b) => b.type === "img" || b.type === "anim" || (b.text || "").trim());
+    const site = clean(whatDraft.site), cam = clean(whatDraft.cam), who = clean(whatDraft.who || []);
     try {
-      await db.doc("settings/about").set({ blocks: site, cam, updatedAt: Date.now() });
-      const still = new Set(assetIdsOf([site, cam]));
+      await db.doc("settings/about").set({ blocks: site, cam, who, updatedAt: Date.now() });
+      const still = new Set(assetIdsOf([site, cam, who]));
       for (const id of before) if (id && !still.has(id) && assets) { try { await assets.delete(id); } catch (_) {} }
       whatDraft = null; whatPreview = false; whatSel = -1; renderWhat();
     } catch (_) { if (whatWin && whatWin.status) whatWin.status.textContent = "Couldn't save."; }
@@ -4146,7 +4206,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     watchShared();
     pushNick();
     db.doc("settings/cam").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; camPhoto = d.photo || null; camManual = d.manual || null; if (!whatDraft) renderWhat(); bootStep("cam"); }, () => bootStep("cam"));
-    db.doc("settings/about").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; aboutBlocks = d.blocks || null; camBlocks = d.cam || null; if (!whatDraft) renderWhat(); bootStep("about"); }, () => bootStep("about"));
+    db.doc("settings/about").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; aboutBlocks = d.blocks || null; camBlocks = d.cam || null; whoBlocks = d.who || null; if (!whatDraft) renderWhat(); bootStep("about"); }, () => bootStep("about"));
     db.doc("settings/icons").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; const next = d.spots || null; if (!next && canWrite && !galleryMode) { saveIconSpots(); bootStep("icons"); return; } if (JSON.stringify(next) === JSON.stringify(publicSpots)) { bootStep("icons"); return; } publicSpots = next; loadIconSpots(); bootStep("icons"); }, () => bootStep("icons"));
     db.collection("settings").doc("desk").onSnapshot((s) => { const v = s.exists ? s.data() : null; setWallpaper(v && (v.bgUrl || (v.bgAssetId && "/_blob/" + v.bgAssetId))).then(() => bootStep("desk")); }, () => bootStep("desk"));
     let firstSnap = true;
