@@ -235,7 +235,6 @@ a, .lnk { color: var(--link); text-decoration: underline; font: inherit; backgro
 .fulltext .desc.art { white-space: pre; font: 11px/1.15 "Courier New", Courier, monospace; overflow-wrap: normal; }
 .win.showtext .capline { display: none; }
 .win.showtext .fulltext { display: block; }
-.edit input[type="date"] { font: 11px var(--sans); }
 .new { color: var(--hot); font-weight: 700; }
 
 /* page windows (readme, index) */
@@ -570,7 +569,6 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   const srcOf = (p) => p.url || (p.assetId ? "/_blob/" + p.assetId : "");
   const nameOf = (p) => (p.fileName || "Pict") + (p.ext || ".JPG");
   const p2 = (n) => String(n).padStart(2, "0");
-  const fmtDate = (ms) => { if (!ms) return ""; const d = new Date(ms); return p2(d.getDate()) + "." + p2(d.getMonth() + 1) + "." + String(d.getFullYear()).slice(2); };
   function hash(s) { let h = 2166136261; for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function btn(cls, text, fn) { const b = el("button", cls, text); b.type = "button"; b.addEventListener("click", fn); return b; }
@@ -993,7 +991,6 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     if (w.extraH) { w.geom.h -= w.extraH; w.extraH = 0; w.el.classList.remove("showtext"); w.apply(); return; }
     f.replaceChildren(el("b", "", nameOf(p)));
     if (p.title) f.append(el("div", "desc" + (isArt(p.title) ? " art" : ""), p.title));
-    f.append(el("div", "dim", fmtDate(p.fileDate || p.createdAt)));
     const before = w.parts.t.parentElement.offsetHeight;
     w.el.classList.add("showtext");
     w.extraH = Math.max(0, f.offsetHeight - before);
@@ -1025,15 +1022,12 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const nm = el("input"); nm.type = "text"; nm.id = "n-" + p.id; nm.maxLength = 60; nm.value = nameOf(p); nm.placeholder = "file name"; nm.setAttribute("aria-label", "Photo name");
     const inp = el("textarea"); inp.id = "t-" + p.id; inp.maxLength = 20000; inp.rows = 4; inp.wrap = "off"; inp.spellcheck = false; inp.value = p.title || "";
     inp.placeholder = "description: any length, spaces and line breaks are kept (Ctrl+Enter saves)"; inp.setAttribute("aria-label", "Photo description");
-    const dt = el("input"); dt.type = "date"; dt.id = "d-" + p.id; dt.setAttribute("aria-label", "Photo date");
-    { const ms = p.fileDate || p.createdAt; if (ms) { const d0 = new Date(ms), z2 = (n) => String(n).padStart(2, "0"); dt.value = d0.getFullYear() + "-" + z2(d0.getMonth() + 1) + "-" + z2(d0.getDate()); } }
     const row = el("div", "capline");
     const ok = btn("lnk", "save", async () => {
       // the name keeps whatever extension is typed; with none, the old one stays
       const raw = nm.value.trim() || nameOf(p), m = raw.match(/^(.*?)(\.[A-Za-z0-9]{1,5})?$/);
       // keep the description's spaces and line breaks, only drop empty lines at the ends
       const upd = { title: inp.value.replace(/\r\n?/g, "\n").replace(/^\s*\n/, "").replace(/\s+$/, ""), fileName: m[1] || raw, ext: m[2] !== undefined ? m[2] : "" };
-      if (dt.value) { const [Y, M, D] = dt.value.split("-").map(Number); upd.fileDate = new Date(Y, M - 1, D, 12).getTime(); }
       if (m[2] === undefined) upd.ext = "";
       // leave the box first: a window whose description box has focus isn't refreshed by the live update
       if (box.contains(document.activeElement)) document.activeElement.blur();
@@ -1044,10 +1038,10 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     const del = btn("lnk", "delete photo", () => {
       row.replaceChildren(el("span", "", "sure?"), btn("lnk", "yes", () => removePhoto(p)), btn("lnk", "no", () => box.remove()));
     });
-    for (const f of [nm, dt]) f.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") box.remove(); });
+    for (const f of [nm]) f.addEventListener("keydown", (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") box.remove(); });
     inp.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ok.click(); } if (e.key === "Escape") box.remove(); });
     row.append(ok, del);
-    box.append(nm, inp, dt, row);
+    box.append(nm, inp, row);
     w.body.append(box);
     w.geom.h = Math.max(w.geom.h, 236); w.geom.w = Math.max(w.geom.w, 200); w.apply();
     nm.focus(); nm.select();
