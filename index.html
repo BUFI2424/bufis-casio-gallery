@@ -580,6 +580,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   function focusWin(w) {
     w.el.classList.remove("hidden");
     w.el.style.zIndex = ++z;
+    saveLayout(w, { hidden: false, z: Date.now() });
     for (const o of every()) { const on = o === w; o.el.classList.toggle("active", on); o.task.classList.toggle("active", on); }
     w.task.classList.remove("off");
     updateGroup();
@@ -606,7 +607,20 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     $("grpList").addEventListener("click", (e) => { if (e.target.closest(".task")) grp.classList.remove("open"); });
     document.addEventListener("pointerdown", (e) => { if (!grp.contains(e.target)) grp.classList.remove("open"); });
   })();
-  function hideWin(w) { w.el.classList.add("hidden"); w.el.classList.remove("active"); w.task.classList.remove("active"); w.task.classList.add("off"); updateGroup(); }
+  function hideWin(w) { w.el.classList.add("hidden"); w.el.classList.remove("active"); w.task.classList.remove("active"); w.task.classList.add("off"); updateGroup(); saveLayout(w, { hidden: true }); }
+  // in edit mode, which photos sit on the desktop and which one is on top become the layout everyone starts with
+  const layoutPending = new Map();
+  function saveLayout(w, part) {
+    const p = w && w.photo;
+    if (!p || w.clone || w.restoring || p.isEdit || p.isShared || !canWrite || !db || galleryMode || PHONE || !bootShown) return;
+    const prev = layoutPending.get(p.id); clearTimeout(prev && prev.t);
+    const upd = Object.assign(prev ? prev.upd : {}, part);
+    layoutPending.set(p.id, { upd, t: setTimeout(async () => {
+      layoutPending.delete(p.id);
+      const u = {}; for (const k in upd) u["win." + k] = upd[k];
+      try { await db.collection("photos").doc(p.id).update(u); } catch (_) { setStatus("Couldn't save the layout.", true); }
+    }, 400) });
+  }
 
   // geom: {x,y,w,h}; onGeom(g) is called after a drag or resize ends
   function makeWin(title, geom, opts = {}) {
@@ -907,7 +921,7 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       const cap = el("div", "capline"), t = el("span", "t"), d = el("span");
       const star = btn("star", "\u2731", (e) => { e.stopPropagation(); toggleFav(w.photo.id); });
       star.title = "Favourite"; star.setAttribute("aria-label", "Favourite");
-      cap.append(star, t, d);
+      cap.append(star, t);
       const full = el("div", "fulltext");
       w.body.append(shot, cap, full);
       w.parts = { img, t, d, full, star };
@@ -935,7 +949,6 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     w.parts.img.alt = capOf(p);
     w.parts.t.replaceChildren(document.createTextNode(capOf(p)));
     if (p.createdAt && Date.now() - p.createdAt < WEEK) { w.parts.t.append(" "); w.parts.t.append(el("span", "new", "NEW!")); }
-    w.parts.d.textContent = fmtDate(p.fileDate || p.createdAt);
     { const on = favIds.has(p.id); w.parts.star.classList.toggle("on", on); w.parts.star.setAttribute("aria-pressed", on ? "true" : "false"); }
     if ((p.isEdit || (p.isShared && (p.uid === meId || isOwnerView))) && !w.metaWired) {
       w.metaWired = true;
@@ -954,13 +967,20 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       w.parts.t.addEventListener("click", () => { if (!galleryMode) openEditor(w); });
       w.editor = true;
     }
-    // remote geometry change (another device moved it) unless we're mid-drag
+    // the owner's layout (place, size, shape, on the desktop or not) is where everyone starts.
+    // it's applied only when it changes, so whatever a visitor rearranges stays theirs until they reload
     const g = isClone ? null : p.win;
-    if (!PHONE && g && typeof g.x === "number" && (g.x !== w.geom.x || g.y !== w.geom.y || (!TABLET && (g.w !== w.geom.w || g.h !== w.geom.h)))) {
-      w.geom = TABLET ? { ...w.geom, x: g.x, y: g.y } : { x: g.x, y: g.y, w: g.w, h: g.h }; w.apply();
+    const sig = g ? JSON.stringify([g.x, g.y, g.w, g.h, !!g.free, !!g.bars, !!g.hidden]) : "";
+    if (g && sig !== w.layoutSig) {
+      w.layoutSig = sig;
+      // phones lay the photos out by themselves; they only follow which photos are on the desktop
+      if (!PHONE && typeof g.x === "number" && (g.x !== w.geom.x || g.y !== w.geom.y || (!TABLET && (g.w !== w.geom.w || g.h !== w.geom.h)))) {
+        w.geom = TABLET ? { ...w.geom, x: g.x, y: g.y } : { x: g.x, y: g.y, w: g.w, h: g.h }; w.apply();
+      }
+      if (!PHONE && !!g.free !== !!w.free) setFree(w, !!g.free);
+      if (!PHONE && !!g.bars !== !!w.bars) setBars(w, !!g.bars);
+      if (!!g.hidden !== w.el.classList.contains("hidden")) { w.restoring = true; if (g.hidden) hideWin(w); else { w.el.classList.remove("hidden"); w.task.classList.remove("off"); updateGroup(); } w.restoring = false; }
     }
-    if (!PHONE && g && !!g.free !== !!w.free) setFree(w, !!g.free);
-    if (!PHONE && g && !!g.bars !== !!w.bars) setBars(w, !!g.bars);
     return w;
   }
   // the caption bar shows the first line of a description; the rest is read in the full text area
@@ -4221,7 +4241,12 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       for (const [key, w] of wins) if (w.clone) { const p = photos.find((q) => q.id === w.photo.id); if (p) syncPhotoWin(p, 0, key); }
       updateCounter();
       if (!photos.length) openIndex(); else renderIndex();
-      if (firstSnap && readme) focusWin(readme);
+      if (firstSnap) {
+        // stack the photos the way the owner last left them: the one touched last on top
+        photos.filter((p) => p.win && p.win.z).sort((a, b) => a.win.z - b.win.z)
+          .forEach((p) => { const w = wins.get(p.id); if (w) w.el.style.zIndex = ++z; });
+        if (readme) focusWin(readme);
+      }
       firstSnap = false;
       bootStep("photos");
     }, () => { loadMsg = "Couldn't load the gallery."; openIndex(); finishBoot(); });
