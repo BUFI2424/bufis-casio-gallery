@@ -613,11 +613,29 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     if (!p || w.clone || w.restoring || p.isEdit || p.isShared || !canWrite || !db || galleryMode || PHONE || !bootShown) return;
     const prev = layoutPending.get(p.id); clearTimeout(prev && prev.t);
     const upd = Object.assign(prev ? prev.upd : {}, part);
-    layoutPending.set(p.id, { upd, t: setTimeout(async () => {
-      layoutPending.delete(p.id);
-      const u = {}; for (const k in upd) u["win." + k] = upd[k];
-      try { await db.collection("photos").doc(p.id).update(u); } catch (_) { setStatus("Couldn't save the layout.", true); }
-    }, 400) });
+    layoutPending.set(p.id, { upd, t: setTimeout(() => { layoutPending.delete(p.id); writeLayout(w, upd); }, 400) });
+  }
+  // writes into this device's composition (computer or tablet). the first time a photo gets one,
+  // it's written whole from how the window looks now, so the rest of it doesn't fall back to defaults
+  async function writeLayout(w, part) {
+    const p = photos.find((q) => q.id === (w.photo && w.photo.id)) || w.photo;
+    const cur = p[LK], g = w.geom;
+    let u;
+    if (cur && typeof cur.x === "number") { u = {}; for (const k in part) u[LK + "." + k] = part[k]; }
+    else {
+      const base = (layoutOf(p) || {}).g || {};
+      u = { [LK]: Object.assign({ x: Math.round(g.x), y: Math.round(g.y), w: Math.round(g.w), h: Math.round(g.h), free: !!w.free, bars: !!w.bars,
+        hidden: w.el.classList.contains("hidden"), z: base.z || 0 }, part) };
+    }
+    if (!TABLET) saveLayoutRef();
+    try { await db.collection("photos").doc(p.id).update(u); } catch (_) { setStatus("Couldn't save the layout.", true); }
+  }
+  // remember how big the computer desktop was, so tablets can scale the computer composition to fit
+  function saveLayoutRef() {
+    const ref = { w: desk.clientWidth, h: desk.clientHeight };
+    if (layoutRef && layoutRef.w === ref.w && layoutRef.h === ref.h) return;
+    layoutRef = ref;
+    db.doc("settings/icons").update({ ref }).catch(() => db.doc("settings/icons").set({ ref, spots: publicSpots || {} }).catch(() => {}));
   }
 
   // geom: {x,y,w,h}; onGeom(g) is called after a drag or resize ends
@@ -891,9 +909,23 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     g.x = Math.round(hash(p.id) * Math.max(10, DW - g.w - 10)); g.y = Math.round(hash(p.id + "y") * Math.max(10, DH - g.h - 10));
     return g;
   }
+  // two compositions: one made on a computer (win) and one made on a tablet (winT).
+  // a tablet with no composition of its own borrows the computer's, scaled to its screen
+  const LK = TABLET ? "winT" : "win";
+  let layoutRef = null;   // the size of the owner's computer desktop when the computer composition was made
+  function layoutOf(p) {
+    if (!p) return null;
+    if (TABLET && p.winT && typeof p.winT.x === "number") return { g: p.winT, own: true };
+    const g = p.win; if (!g) return null;
+    if (!TABLET) return { g, own: typeof g.x === "number" };
+    if (typeof g.x !== "number") return { g, own: false };
+    const DW = desk.clientWidth, DH = desk.clientHeight;
+    const kx = layoutRef && layoutRef.w ? DW / layoutRef.w : 1, ky = layoutRef && layoutRef.h ? DH / layoutRef.h : 1;
+    return { g: { ...g, x: Math.round(g.x * kx), y: Math.round(g.y * ky) }, own: false };
+  }
   function geomOf(p, i) {
-    const g = p.win;
-    if (!PHONE && g && typeof g.x === "number") return TABLET ? { ...defaultGeom(p, i), x: g.x, y: g.y } : { x: g.x, y: g.y, w: g.w, h: g.h };
+    const L = layoutOf(p), g = L && L.g;
+    if (!PHONE && g && typeof g.x === "number") return L.own ? { x: g.x, y: g.y, w: g.w, h: g.h } : { ...defaultGeom(p, i), x: g.x, y: g.y };
     return defaultGeom(p, i);
   }
   function syncPhotoWin(p, i, key = p.id, startGeom = null) {
@@ -913,7 +945,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       img.addEventListener("load", () => {
         // first time a photo appears and nobody placed it yet: size the window to the photo
         const ph = w.photo;
-        if (ph && (PHONE || TABLET || !(ph.win && typeof ph.win.x === "number")) && !w.sized) { w.sized = true; w.geom = natGeom(w, w.geom.x, w.geom.y); w.apply(); }
+        const L = layoutOf(ph);
+        if (ph && (PHONE || !(L && L.own)) && !w.sized) { w.sized = true; w.geom = natGeom(w, w.geom.x, w.geom.y); w.apply(); }
         else if (!w.free && !w.bars) { keepAspect(w, true); w.apply(); }
       });
       const cap = el("div", "capline"), t = el("span", "t"), d = el("span");
@@ -967,13 +1000,13 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     }
     // the owner's layout (place, size, shape, on the desktop or not) is where everyone starts.
     // it's applied only when it changes, so whatever a visitor rearranges stays theirs until they reload
-    const g = isClone ? null : p.win;
-    const sig = g ? JSON.stringify([g.x, g.y, g.w, g.h, !!g.free, !!g.bars, !!g.hidden]) : "";
+    const L = isClone ? null : layoutOf(p), g = L && L.g;
+    const sig = g ? JSON.stringify([g.x, g.y, g.w, g.h, !!g.free, !!g.bars, !!g.hidden, L.own]) : "";
     if (g && sig !== w.layoutSig) {
       w.layoutSig = sig;
       // phones lay the photos out by themselves; they only follow which photos are on the desktop
-      if (!PHONE && typeof g.x === "number" && (g.x !== w.geom.x || g.y !== w.geom.y || (!TABLET && (g.w !== w.geom.w || g.h !== w.geom.h)))) {
-        w.geom = TABLET ? { ...w.geom, x: g.x, y: g.y } : { x: g.x, y: g.y, w: g.w, h: g.h }; w.apply();
+      if (!PHONE && typeof g.x === "number" && (g.x !== w.geom.x || g.y !== w.geom.y || (L.own && (g.w !== w.geom.w || g.h !== w.geom.h)))) {
+        w.geom = L.own ? { x: g.x, y: g.y, w: g.w, h: g.h } : { ...w.geom, x: g.x, y: g.y }; w.apply();
       }
       if (!PHONE && !!g.free !== !!w.free) setFree(w, !!g.free);
       if (!PHONE && !!g.bars !== !!w.bars) setBars(w, !!g.bars);
@@ -1049,11 +1082,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   const pending = new Map();
   function saveGeom(id, g) {
     if (!canWrite || !db || galleryMode || PHONE || /^[ces]:/.test(String(id))) return;
-    const fw = wins.get(id), free = !!(fw && fw.free), bars = !!(fw && fw.bars);
+    const fw = wins.get(id); if (!fw) return;
     clearTimeout(pending.get(id));
-    pending.set(id, setTimeout(async () => {
-      try { await db.collection("photos").doc(id).update({ win: { x: Math.round(g.x), y: Math.round(g.y), w: Math.round(g.w), h: Math.round(g.h), free, bars } }); }
-      catch (_) { setStatus("Couldn't save the position.", true); }
+    pending.set(id, setTimeout(() => {
+      // only the shape and place: whether it's on the desktop and its stacking stay as they are
+      writeLayout(fw, { x: Math.round(g.x), y: Math.round(g.y), w: Math.round(g.w), h: Math.round(g.h), free: !!fw.free, bars: !!fw.bars });
     }, 400));
   }
   function scatterAll() { shuffleAll(); }
@@ -1417,9 +1450,11 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   }
   const ICON_KEY = "casio-gallery-icons";
   // the owner's layout (set in edit mode) is the one everyone sees; a visitor's drags only last until they reload
-  let publicSpots = null;
+  let publicSpots = null, publicSpotsT = null;
+  const SPOTS = TABLET ? "spotsT" : "spots";
   function loadIconSpots() {
-    let saved = publicSpots || {};
+    // a tablet uses its own icon places, or the computer's until it has them
+    let saved = (TABLET && publicSpotsT) || publicSpots || {};
     if (!publicSpots && canWrite && !galleryMode) { try { saved = JSON.parse(localStorage.getItem(ICON_KEY) || "{}"); } catch (_) {} }
     // icons fill the first column top to bottom, then the next one, so none fall below the bar on short screens
     const rows = Math.max(1, Math.floor((desk.clientHeight - ORIGIN) / CELL_H)), cols = Math.max(1, Math.floor((desk.clientWidth - ORIGIN) / CELL_W));
@@ -1433,8 +1468,9 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
   function saveIconSpots() {
     const out = {}; iconEls().forEach((icon) => { out[icon.id] = [+icon.dataset.c, +icon.dataset.r]; });
     if (!canWrite || galleryMode || !db) return;
-    publicSpots = out;
-    db.doc("settings/icons").set({ spots: out, updatedAt: Date.now() }).catch(() => setStatus("Couldn't save the icon positions.", true));
+    if (TABLET) publicSpotsT = out; else publicSpots = out;
+    const u = { [SPOTS]: out, updatedAt: Date.now() };
+    db.doc("settings/icons").update(u).catch(() => db.doc("settings/icons").set(u)).catch(() => setStatus("Couldn't save the icon positions.", true));
   }
   function makeIconDraggable(icon) {
     let sx, sy, ox, oy, on = false, moved = false;
@@ -4221,7 +4257,18 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
     pushNick();
     db.doc("settings/cam").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; camPhoto = d.photo || null; camManual = d.manual || null; if (!whatDraft) renderWhat(); bootStep("cam"); }, () => bootStep("cam"));
     db.doc("settings/about").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; aboutBlocks = d.blocks || null; camBlocks = d.cam || null; whoBlocks = d.who || null; if (!whatDraft) renderWhat(); bootStep("about"); }, () => bootStep("about"));
-    db.doc("settings/icons").onSnapshot((sn) => { const d = sn.exists ? (sn.data() || {}) : {}; const next = d.spots || null; if (!next && canWrite && !galleryMode) { saveIconSpots(); bootStep("icons"); return; } if (JSON.stringify(next) === JSON.stringify(publicSpots)) { bootStep("icons"); return; } publicSpots = next; loadIconSpots(); bootStep("icons"); }, () => bootStep("icons"));
+    db.doc("settings/icons").onSnapshot((sn) => {
+      const d = sn.exists ? (sn.data() || {}) : {};
+      // the computer desktop's size: tablets scale the computer composition by it
+      const ref = d.ref && d.ref.w ? d.ref : null;
+      if (JSON.stringify(ref) !== JSON.stringify(layoutRef)) { layoutRef = ref; if (TABLET && photos.length) photos.forEach((p, i) => syncPhotoWin(p, i)); }
+      // an older computer composition has no recorded size yet: the owner's computer gives it one
+      if (!ref && !TABLET && !PHONE && canWrite && !galleryMode) saveLayoutRef();
+      const next = d.spots || null, nextT = d.spotsT || null;
+      if (!next && !TABLET && canWrite && !galleryMode) { saveIconSpots(); bootStep("icons"); return; }
+      if (JSON.stringify(next) === JSON.stringify(publicSpots) && JSON.stringify(nextT) === JSON.stringify(publicSpotsT)) { bootStep("icons"); return; }
+      publicSpots = next; publicSpotsT = nextT; loadIconSpots(); bootStep("icons");
+    }, () => bootStep("icons"));
     db.collection("settings").doc("desk").onSnapshot((s) => { const v = s.exists ? s.data() : null; setWallpaper(v && (v.bgUrl || (v.bgAssetId && "/_blob/" + v.bgAssetId))).then(() => bootStep("desk")); }, () => bootStep("desk"));
     let firstSnap = true;
     db.collection("photos").orderBy("createdAt", "asc").onSnapshot((snap) => {
@@ -4237,7 +4284,8 @@ body.dropping #desk { outline: 2px dashed var(--dk); outline-offset: -6px; }
       if (!photos.length) openIndex(); else renderIndex();
       if (firstSnap) {
         // stack the photos the way the owner last left them: the one touched last on top
-        photos.filter((p) => p.win && p.win.z).sort((a, b) => a.win.z - b.win.z)
+        const zOf = (p) => { const L = layoutOf(p); return (L && L.g && L.g.z) || 0; };
+        photos.filter((p) => zOf(p)).sort((a, b) => zOf(a) - zOf(b))
           .forEach((p) => { const w = wins.get(p.id); if (w) w.el.style.zIndex = ++z; });
         if (readme) focusWin(readme);
       }
